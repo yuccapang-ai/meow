@@ -22,6 +22,7 @@
     function between(minimum, maximum) { return minimum + Math.floor(random() * (maximum - minimum + 1)); }
     function nextDeparture(now) { return now + between(20000, 90000); }
     function validTime(value) { return typeof value === 'number' && isFinite(value) && value > 0; }
+    function validWakeEnergy(value) { return typeof value === 'number' && isFinite(value) && value >= 10 && value <= MAX_ENERGY; }
     function validPosition(position) {
       return position && typeof position.x === 'number' && isFinite(position.x) && position.x >= 0 && position.x <= 1 &&
         typeof position.y === 'number' && isFinite(position.y) && position.y >= 0 && position.y <= 1;
@@ -36,11 +37,13 @@
           var travelling = validTime(entry.startedAt) && validTime(entry.endsAt) &&
             entry.endsAt - entry.startedAt >= 60000 && entry.endsAt - entry.startedAt <= 300000 && entry.startedAt <= clock();
           var hasEnergy = typeof entry.energy === 'number' && isFinite(entry.energy);
+          var sleeping = entry.sleeping === true;
           data.cats[progress.cat.id] = { startedAt: travelling ? entry.startedAt : 0, endsAt: travelling ? entry.endsAt : 0,
             nextAt: validTime(entry.nextAt) ? Math.min(entry.nextAt, loadedAt + 90000) : nextDeparture(loadedAt),
             energy: hasEnergy ? Math.max(0, Math.min(MAX_ENERGY, entry.energy)) : MAX_ENERGY,
             energyAt: validTime(entry.energyAt) ? Math.min(entry.energyAt, loadedAt) : travelling ? entry.startedAt : loadedAt,
-            sleeping: entry.sleeping === true };
+            sleeping: sleeping,
+            wakeAt: sleeping && validWakeEnergy(entry.wakeAt) ? entry.wakeAt : sleeping && hasEnergy && entry.energy < SLEEP_THRESHOLD ? between(10, MAX_ENERGY) : 0 };
         });
         furniture.forEach(function (item) {
           var count = saved.furniture && saved.furniture[item.id];
@@ -65,7 +68,7 @@
     function sync(now) {
       collection.list().forEach(function (progress) {
         if (progress.home && !data.cats[progress.cat.id]) data.cats[progress.cat.id] = {
-          startedAt: 0, endsAt: 0, nextAt: nextDeparture(now), energy: MAX_ENERGY, energyAt: now, sleeping: false
+          startedAt: 0, endsAt: 0, nextAt: nextDeparture(now), energy: MAX_ENERGY, energyAt: now, sleeping: false, wakeAt: 0
         };
         if (!progress.home) delete data.cats[progress.cat.id];
       });
@@ -87,8 +90,11 @@
         }
         changed = true;
       }
+      if (entry.sleeping && validWakeEnergy(entry.wakeAt) && entry.energy >= entry.wakeAt) {
+        entry.sleeping = false; entry.wakeAt = 0; changed = true;
+      }
       if (!entry.endsAt && !entry.sleeping && entry.energy < SLEEP_THRESHOLD) {
-        entry.sleeping = true; changed = true;
+        entry.sleeping = true; entry.wakeAt = between(10, MAX_ENERGY); changed = true;
       }
       if (entry.energyAt !== cursor) { entry.energyAt = cursor; changed = true; }
       return changed;
@@ -115,7 +121,8 @@
         data.catnip = Math.min(MAX_CATNIP, data.catnip + catnip);
       }
       entry.startedAt = 0; entry.endsAt = 0; entry.nextAt = nextDeparture(now);
-      if (entry.energy < SLEEP_THRESHOLD) entry.sleeping = true;
+      if (entry.energy < SLEEP_THRESHOLD) { entry.sleeping = true; entry.wakeAt = between(10, MAX_ENERGY); }
+      else { entry.sleeping = false; entry.wakeAt = 0; }
       entry.energyAt = now;
       log(recalled ? progress.cat.name + '被召回啦' : progress.cat.name + '旅行回来啦，带回' + gifts.map(function (id) {
         return furniture.filter(function (item) { return item.id === id; })[0].name;
@@ -147,12 +154,12 @@
         var entry = data.cats[id];
         if (entry.endsAt || entry.nextAt > now) return;
         if (entry.sleeping || entry.energy < SLEEP_THRESHOLD) {
-          entry.sleeping = true;
+          if (!entry.sleeping) { entry.sleeping = true; entry.wakeAt = between(10, MAX_ENERGY); }
           entry.nextAt = nextDeparture(now);
           return;
         }
         if (home <= 3) { entry.nextAt = nextDeparture(now); return; }
-        entry.startedAt = now; entry.endsAt = now + between(60000, 300000); entry.energyAt = now; entry.sleeping = false; home--;
+        entry.startedAt = now; entry.endsAt = now + between(60000, 300000); entry.energyAt = now; entry.sleeping = false; entry.wakeAt = 0; home--;
         events.push({ type: 'depart', id: id });
         log(collection.progress(id).cat.name + '背上小包出门旅行啦', now);
       });
@@ -166,14 +173,14 @@
     function sleep(id) {
       var now = clock(), entry = data.cats[id];
       if (!entry || entry.endsAt) return false;
-      advanceEntry(id, now); entry.sleeping = true; entry.energyAt = now; persist(); return true;
+      advanceEntry(id, now); entry.sleeping = true; entry.wakeAt = 0; entry.energyAt = now; persist(); return true;
     }
     function wake(id) {
       var now = clock(), entry = data.cats[id];
       if (!entry || entry.endsAt || !entry.sleeping) return false;
       advanceEntry(id, now);
       if (entry.energy <= SLEEP_THRESHOLD) return false;
-      entry.sleeping = false; entry.energyAt = now; persist(); return true;
+      entry.sleeping = false; entry.wakeAt = 0; entry.energyAt = now; persist(); return true;
     }
     function placeFurniture(id, position) {
       if (!furniture.some(function (item) { return item.id === id; }) || !data.furniture[id] || !validPosition(position)) return false;

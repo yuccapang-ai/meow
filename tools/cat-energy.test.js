@@ -28,9 +28,13 @@ assert.strictEqual(cat('donut').sleeping, true, 'energy below five forces sleep'
 assert.strictEqual(travel.wake('donut'), false, 'cats below five energy cannot wake');
 now += 90000; travel.tick();
 assert.strictEqual(cat('donut').energy, 7);
-assert.strictEqual(cat('donut').sleeping, true, 'sleep persists until explicitly woken');
-assert.strictEqual(travel.wake('donut'), true, 'cats above five energy can wake');
+assert.strictEqual(cat('donut').sleeping, true, 'low-energy sleep lasts until the random wake threshold');
+now += 240000; travel.tick();
+assert.strictEqual(cat('donut').energy, 15);
 assert.strictEqual(cat('donut').sleeping, false);
+assert.strictEqual(travel.sleep('donut'), true);
+now += 60000; travel.tick();
+assert.strictEqual(travel.wake('donut'), true, 'manually sleeping cats above five energy can wake');
 
 collection.recordRun('cats', [0,30,30,30,30,30,30,30,30], 'unlock');
 collection.recordRun('cats', [0,100,100,100,100,100,100,100,100], 'home-slots');
@@ -51,4 +55,4 @@ var reloaded = Travel.create({
   random: function () { return 0.5; }
 });
 assert.strictEqual(cat(trip.cat.id).energy, reloaded.list().filter(function (entry) { return entry.cat.id === trip.cat.id; })[0].energy);
-console.log('PASS: default energy, home/travel drain, forced sleep, recovery, wake threshold and reload persistence.');
+console.log('PASS: default energy, home/travel drain, forced sleep, random auto-wake, manual wake and reload persistence.');
