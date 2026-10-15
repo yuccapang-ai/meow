@@ -17,7 +17,9 @@ function Image() { images.push(this); }
 function readyImages() { images.splice(0).forEach(function (image) { image.onload(); }); }
 var media = { matches: false, addListener: function (cb) { this.listener = cb; } };
 var collection = Collection.create(null), window = { TurtleCatActions: Actions, TurtleCatCollection: { get: function () { return collection; } }, matchMedia: function () { return media; } };
-var context = { window: window, document: document, Image: Image, Math: Math,
+var seededMath = Object.create(Math), randomSeed = Number(process.env.ROOM_TEST_SEED) || 73421;
+seededMath.random = function () { randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0; return randomSeed / 4294967296; };
+var context = { window: window, document: document, Image: Image, Math: seededMath,
   requestAnimationFrame: function (cb) { var id = ++sequence; scheduled.set(id, cb); return id; },
   cancelAnimationFrame: function (id) { scheduled.delete(id); } };
 vm.createContext(context);
@@ -26,9 +28,34 @@ var world = new Element('div'), viewport = { clientWidth: 375, clientHeight: 667
 var status = new Element('p'), findButton = new Element('button'), camera = 0;
 var room = window.TurtleRoomResidents.create({ world: world, viewport: viewport, footer: { offsetHeight: 210 }, status: status,
   findButton: findButton, background: { complete: true, naturalWidth: 2103 }, moveTo: function (x) { camera = x; } });
-function tick() { now += 1000 / 60; var callbacks = Array.from(scheduled.values()); scheduled.clear(); callbacks.forEach(function (cb) { cb(now); }); }
+function tick(elapsed) { now += elapsed || 1000 / 60; var callbacks = Array.from(scheduled.values()); scheduled.clear(); callbacks.forEach(function (cb) { cb(now); }); assertSeparated(); }
 function actor(id) { return world.children.filter(function (el) { return el.getAttribute('data-cat-id') === id; })[0]; }
 function pose(el) { return el.children[1].children[0].getAttribute('data-frame'); }
+var atlases = {};
+Collection.catalog.forEach(function (cat) { atlases[cat.id] = JSON.parse(fs.readFileSync(require.resolve('../app/' + cat.atlas.replace('.webp', '.json')), 'utf8')); });
+// Check actual visible sprite rectangles, including facing and depth scaling,
+// independently of the movement controller's collision calculations.
+function body(el) {
+  var transform = el.style.transform.match(/translate3d\(([-\d.]+)px,([-\d.]+)px,0\) scale\(([-\d.]+)\)/);
+  assert.ok(transform, 'cat has a finite rendered position');
+  var size = parseFloat(el.style.width), scale = Number(transform[3]);
+  var atlas = atlases[el.getAttribute('data-cat-id')], frame = atlas.frames[Number(pose(el)) || 0];
+  var left = el.children[1].style.transform === 'scaleX(-1)' ? atlas.cell - frame.left - frame.width : frame.left;
+  var x = Number(transform[1]) + size / 2 + (left / atlas.cell - 0.5) * size * scale;
+  var y = Number(transform[2]) + size * atlas.footY / atlas.cell + (frame.top - atlas.footY) / atlas.cell * size * scale;
+  return { x: x, y: y, right: x + frame.width / atlas.cell * size * scale, bottom: y + frame.height / atlas.cell * size * scale };
+}
+function assertSeparated() {
+  var visible = world.children.filter(function (el) { return !el.hidden && el.style.transform; });
+  visible.forEach(function (el, index) {
+    var a = body(el);
+    visible.slice(index + 1).forEach(function (other) {
+      var b = body(other);
+      assert.ok(a.right <= b.x || b.right <= a.x || a.bottom <= b.y || b.bottom <= a.y,
+        el.getAttribute('data-cat-id') + ' overlaps ' + other.getAttribute('data-cat-id') + ' at ' + now);
+    });
+  });
+}
 room.enter(); room.layout(1875); readyImages(); room.start();
 assert.strictEqual(world.children.length, 1);
 var donut = actor('donut');
@@ -53,6 +80,7 @@ collection.recordRun('cats', [49,29], 'near'); room.enter(); room.layout(1875); 
 assert.strictEqual(world.children.length, 1);
 assert.strictEqual(room.perform('donut', 'special'), false);
 collection.recordRun('cats', [1,1], 'unlock'); room.enter(); room.layout(1875); readyImages(); room.start();
+assertSeparated();
 assert.strictEqual(world.children.length, 2);
 assert.strictEqual(room.perform('donut', 'special'), true);
 assert.strictEqual(donut.getAttribute('data-state'), 'special');
@@ -62,17 +90,52 @@ findButton.click(); assert.ok(isFinite(camera));
 
 collection.recordRun('cats', [0,20,50,50,50,50,50,50,50], 'all');
 room.enter(); room.layout(1875); readyImages(); room.start();
+assertSeparated();
 assert.strictEqual(world.children.length, 9);
 Collection.catalog.forEach(function (cat) { assert.strictEqual(room.perform(cat.id, 'special'), true); assert.strictEqual(actor(cat.id).getAttribute('data-state'), 'special'); });
 for (i = 0; i < 360; i++) tick();
 assert.ok(world.children.every(function (el) { return el.hidden === false && !/NaN|Infinity/.test(el.style.transform); }));
 var fullSize = parseFloat(donut.style.width);
 room.layout(937.5, 667, 1, 0);
+assertSeparated();
 assert.strictEqual(parseFloat(donut.style.width), fullSize, 'cats keep their size when only room length is halved');
 Collection.catalog.forEach(function (cat) { room.perform(cat.id, 'walk'); });
 for (i = 0; i < 180; i++) tick();
 assert.ok(world.children.every(function (el) { return !/NaN|Infinity/.test(el.style.transform); }));
 room.focus('donut'); assert.ok(isFinite(camera), 'finding cats works in half-length world');
+
+// All nine cats share a shortened room for two minutes, including long frames.
+// Sleeping cats remain obstacles; no actor may jump when avoiding a neighbour.
+var movedCats = new Set(), waiting = false;
+room.perform('donut', 'sleep');
+var sleepingPosition = donut.style.transform;
+for (i = 0; i < 7200; i++) {
+  var before = world.children.map(function (el) {
+    var match = el.style.transform.match(/translate3d\(([-\d.]+)px,([-\d.]+)px/);
+    return { x: Number(match[1]), y: Number(match[2]) };
+  });
+  tick(i % 113 === 0 ? 250 : 1000 / 60);
+  world.children.forEach(function (el, index) {
+    var match = el.style.transform.match(/translate3d\(([-\d.]+)px,([-\d.]+)px/);
+    var dx = Number(match[1]) - before[index].x, dy = Number(match[2]) - before[index].y;
+    assert.ok(Math.sqrt(dx * dx + dy * dy) <= viewport.clientHeight * 0.065 * 0.05 + 0.02, 'avoiding cats never teleports them');
+    if (Math.abs(dx) + Math.abs(dy) > 0.01) movedCats.add(el.getAttribute('data-cat-id'));
+    if (el.getAttribute('data-state') === 'idle') waiting = true;
+  });
+  if (i < 240) assert.strictEqual(donut.style.transform, sleepingPosition, 'walkers do not push sleeping cats');
+}
+assert.strictEqual(movedCats.size, 9, 'every cat can still walk in a crowded room');
+assert.ok(waiting, 'crowded cats can stop and wait for a clear route');
+
+// Repacking on smaller screens must preserve all nine residents and safe spacing.
+[[320,480], [375,568], [390,844], [480,360], [375,667]].forEach(function (dimensions) {
+  viewport.clientWidth = dimensions[0]; viewport.clientHeight = dimensions[1];
+  room.layout(Math.max(viewport.clientWidth, viewport.clientHeight * 2103 / 748 / 2), viewport.clientHeight, 1, 0);
+  assertSeparated();
+  Collection.catalog.forEach(function (cat) { room.perform(cat.id, 'walk'); });
+  for (var frame = 0; frame < 180; frame++) tick();
+  assert.strictEqual(world.children.filter(function (el) { return !el.hidden; }).length, 9);
+});
 document.hidden = true; document.events.visibilitychange();
 assert.strictEqual(scheduled.size, 0);
 var paused = world.children.map(function (el) { return el.style.transform; }); now += 600000;
@@ -89,4 +152,4 @@ window.TurtleCollectionView.render();
 assert.strictEqual(ids['collection-list'].children.length, 9);
 assert.ok(ids['collection-list'].children.every(function (card) { return card.children[1].children.every(function (button) { return button.disabled === false; }); }));
 assert.ok(ids['collection-summary'].textContent.indexOf('9 / 9') >= 0);
-console.log('PASS: default donut, locked actions, all nine actors, half-length world, distinct gait, wake, find, pause/resume, reduced motion and collection cards.');
+console.log('PASS: nine cats avoid overlap, wait and keep walking; safe spawns/resizes, sleeping obstacles, no teleporting, distinct gait, unlocks, pause/resume and collection cards.');
