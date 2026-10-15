@@ -1,0 +1,146 @@
+{
+  "image": "painter-actions-v1.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "画爪印",
+  "frames": [
+    {
+      "index": 0,
+      "left": 25,
+      "top": 55,
+      "width": 216,
+      "height": 177
+    },
+    {
+      "index": 1,
+      "left": 18,
+      "top": 55,
+      "width": 223,
+      "height": 177
+    },
+    {
+      "index": 2,
+      "left": 16,
+      "top": 55,
+      "width": 222,
+      "height": 177
+    },
+    {
+      "index": 3,
+      "left": 15,
+      "top": 55,
+      "width": 221,
+      "height": 177
+    },
+    {
+      "index": 4,
+      "left": 24,
+      "top": 55,
+      "width": 217,
+      "height": 177
+    },
+    {
+      "index": 5,
+      "left": 29,
+      "top": 57,
+      "width": 211,
+      "height": 175
+    },
+    {
+      "index": 6,
+      "left": 20,
+      "top": 55,
+      "width": 218,
+      "height": 177
+    },
+    {
+      "index": 7,
+      "left": 16,
+      "top": 54,
+      "width": 220,
+      "height": 178
+    },
+    {
+      "index": 8,
+      "left": 19,
+      "top": 84,
+      "width": 216,
+      "height": 148
+    },
+    {
+      "index": 9,
+      "left": 15,
+      "top": 102,
+      "width": 216,
+      "height": 130
+    },
+    {
+      "index": 10,
+      "left": 23,
+      "top": 105,
+      "width": 207,
+      "height": 127
+    },
+    {
+      "index": 11,
+      "left": 20,
+      "top": 110,
+      "width": 204,
+      "height": 122
+    },
+    {
+      "index": 12,
+      "left": 16,
+      "top": 31,
+      "width": 232,
+      "height": 201
+    },
+    {
+      "index": 13,
+      "left": 18,
+      "top": 29,
+      "width": 224,
+      "height": 203
+    },
+    {
+      "index": 14,
+      "left": 15,
+      "top": 32,
+      "width": 229,
+      "height": 200
+    },
+    {
+      "index": 15,
+      "left": 11,
+      "top": 28,
+      "width": 230,
+      "height": 204
+    }
+  ]
+}

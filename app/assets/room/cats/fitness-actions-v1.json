@@ -1,0 +1,146 @@
+{
+  "image": "fitness-actions-v1.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "举哑铃",
+  "frames": [
+    {
+      "index": 0,
+      "left": 41,
+      "top": 63,
+      "width": 193,
+      "height": 169
+    },
+    {
+      "index": 1,
+      "left": 35,
+      "top": 65,
+      "width": 198,
+      "height": 167
+    },
+    {
+      "index": 2,
+      "left": 25,
+      "top": 64,
+      "width": 209,
+      "height": 168
+    },
+    {
+      "index": 3,
+      "left": 30,
+      "top": 65,
+      "width": 203,
+      "height": 167
+    },
+    {
+      "index": 4,
+      "left": 36,
+      "top": 65,
+      "width": 198,
+      "height": 167
+    },
+    {
+      "index": 5,
+      "left": 38,
+      "top": 63,
+      "width": 195,
+      "height": 169
+    },
+    {
+      "index": 6,
+      "left": 35,
+      "top": 66,
+      "width": 198,
+      "height": 166
+    },
+    {
+      "index": 7,
+      "left": 39,
+      "top": 63,
+      "width": 193,
+      "height": 169
+    },
+    {
+      "index": 8,
+      "left": 25,
+      "top": 109,
+      "width": 215,
+      "height": 123
+    },
+    {
+      "index": 9,
+      "left": 30,
+      "top": 115,
+      "width": 207,
+      "height": 117
+    },
+    {
+      "index": 10,
+      "left": 25,
+      "top": 129,
+      "width": 209,
+      "height": 103
+    },
+    {
+      "index": 11,
+      "left": 23,
+      "top": 128,
+      "width": 210,
+      "height": 104
+    },
+    {
+      "index": 12,
+      "left": 47,
+      "top": 17,
+      "width": 189,
+      "height": 215
+    },
+    {
+      "index": 13,
+      "left": 56,
+      "top": 17,
+      "width": 160,
+      "height": 215
+    },
+    {
+      "index": 14,
+      "left": 35,
+      "top": 17,
+      "width": 185,
+      "height": 215
+    },
+    {
+      "index": 15,
+      "left": 52,
+      "top": 16,
+      "width": 164,
+      "height": 216
+    }
+  ]
+}

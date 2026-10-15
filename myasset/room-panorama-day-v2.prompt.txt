@@ -1,0 +1,27 @@
+Room panorama day v2
+Generation mode: built-in image_gen, image expansion/edit
+Reference: app/assets/room/room-background-day-v1.png
+Project asset: app/assets/room/room-panorama-day-v2.png
+Scroll direction: horizontal
+Design: approximately five portrait viewports, with continuous floor and four architectural zone boundaries.
+Proposed zone order: welcome/living, feeding, play, quiet/sleeping, sunny window.
+Cats, furniture, locked-area masks and unlock controls should be separate runtime layers. The asset itself contains no gameplay logic or unlock conditions.
+
+Final generation prompt:
+
+Use case: style-transfer / environment expansion.
+Asset type: a continuous horizontally scrolling 2D room background for a portrait mobile cat-collecting game with sequential area unlocking.
+Input image: the provided cozy room background is the edit target and the authoritative style reference.
+Primary request: EXPAND AND REDRAW the provided portrait room as ONE EXTRA-WIDE HORIZONTAL PANORAMA, target 3600 x 1280 pixels, aspect ratio 45:16 (approximately 2.8:1). This panorama contains FIVE adjacent equal-width room bays, each approximately a 9:16 portrait viewport. Output the entire horizontal panorama, NOT a portrait image and NOT a collage. Preserve the original visual identity: cream walls, warm honey wood flooring, sage green wainscoting, sage/cream checker trim, rounded wooden window frames, cream curtains, gentle sunlight, watercolor-paper texture, slightly irregular dark brown hand-drawn outlines.
+Game composition: use a consistent near-orthographic elevated front-facing camera across the whole width, with the wall-floor junction at a constant 40% of image height. The lower 60% is broad clear floor for independently animated cats and separately placed interactive furniture. Avoid strong wide-angle perspective or convergence toward one central vanishing point. All five bays have the same visual scale, floor depth, lighting direction and baseline. Existing original room should remain recognizable as the first bay on the left.
+Five sequential unlockable areas, from left to right, distinguished ONLY by fixed wall architecture and subtle decorative differences:
+1. Welcome / resting bay: closely match the original cream-curtained rectangular window with green foliage outside, botanical picture and sage wainscoting.
+2. Feeding bay: warm cream upper wall with a small rounded window; a quiet cream-and-sage small tile backsplash on the lower wall, echoing the checker motif; empty clear floor ready for separate bowls later.
+3. Play bay: broad cream wall with a restrained sage arch-shaped painted wall accent, a few tiny simple decorative star marks confined to that accent, and a small round high window; empty clear floor ready for separate cat trees and toys later. No wall climbing furniture.
+4. Quiet / sleeping bay: softer cream and muted sage wall finish, a smaller arched window framed with cream gathered curtains and a tiny botanical wall illustration; empty clear floor ready for separate beds later.
+5. Sunny window bay: wide tall garden-facing glazing with warm wooden mullions and light cream curtains, leafy greens visible outside, diffused sun patch on the floor; empty clear floor ready for separate lounge furniture later.
+Area boundaries: at approximately 20%, 40%, 60%, and 80% of the full width use slim flush vertical timber wall trims or very shallow wall posts, stopping at the rear baseboard. These mark sensible unlock-mask edges while leaving ALL foreground walking floor continuous and unobstructed. No dividing walls projecting into the floor, no doors or fences blocking the passage, no black separators, no panel gutters. The wood floor and rear baseboard join naturally across the full panorama.
+Maintain an even, friendly, cozy daytime mood. Color palette: warm paper #f4e7cc, pale beige #ece0c0, honey wood #e3d4ae, sage #93ad7f and muted moss #5f7c4b, cocoa outlines. Keep saturated colors minimal. Draw a small number of broad floor planks with restrained low-contrast grain, rather than busy high-frequency detail.
+Top 7% should remain visually quiet for later overlay UI. Bottom 10% is clear floor for later navigation overlays. The panorama goes edge to edge with no outside cutaway margin, no exterior facade, no roof.
+Critical: this is ONLY the static background layer. No cats, people or animals. No freestanding furniture, sofas, beds, food bowls, cat trees, scratchers, toys, rugs or floor plants; all gameplay objects will be added later as separate interactive sprites. Do not draw labels, section names, letters, numbers, locks, currency, unlock prices, buttons, arrows, UI, watermark or logo. Do not add dark fog or locked overlays; those belong to the game UI later. No photo-realism, no 3D render, no pixel art.
+Deliver one polished cohesive ultra-wide game background, five readable architectural zones, large uninterrupted walkable floor, strongly matching the supplied illustration.
