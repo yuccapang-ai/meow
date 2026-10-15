@@ -7,7 +7,7 @@
 }
 .room__viewport::-webkit-scrollbar { display: none; }
 .room__viewport.is-dragging { cursor: grabbing; }
-.room__world { position: relative; top: 25%; height: 50%; z-index: 0; }
+.room__world { position: relative; top: 0; height: 100%; z-index: 0; }
 .room__background { display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; }
 /* 角色只做世界坐标位移和朝向翻转；身体动作全部来自图集的独立画帧。 */
 .room-cat {

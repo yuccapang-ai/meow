@@ -11,7 +11,7 @@
   var counter = document.getElementById('room-counter');
   var buttons = document.querySelectorAll('[data-room-zone]');
   var edges = [0, 0.233, 0.406, 0.594, 0.766, 1];
-  var ROOM_SCALE = 0.5;
+  var ROOM_WIDTH_SCALE = 0.5;
   var active = false, current = 0, position = 0, worldWidth = 0;
   var frame = 0, motion = 0, dragging = null;
   var residents = root.TurtleRoomResidents.create({
@@ -41,16 +41,15 @@
     if (!active) return;
     stopMotion();
     var ratio = background.naturalWidth && background.naturalHeight ? background.naturalWidth / background.naturalHeight : 2103 / 748;
-    // 背景与猫咪同按 50% 缩放，UI 保持原尺寸；居中展示更宽的房间视野。
-    var worldHeight = viewport.clientHeight * ROOM_SCALE;
-    var worldTop = (viewport.clientHeight - worldHeight) / 2;
-    worldWidth = Math.max(viewport.clientWidth, worldHeight * ratio);
+    // 高度铺满视口，只将房间横向长度减半；猫咪保持原尺寸。
+    var worldHeight = viewport.clientHeight;
+    worldWidth = Math.max(viewport.clientWidth, worldHeight * ratio * ROOM_WIDTH_SCALE);
     world.style.width = worldWidth + 'px';
     world.style.height = worldHeight + 'px';
-    world.style.top = worldTop + 'px';
+    world.style.top = '0px';
     viewport.scrollLeft = position * maxScroll();
     renderPosition();
-    residents.layout(worldWidth, worldHeight, ROOM_SCALE, worldTop);
+    residents.layout(worldWidth, worldHeight, 1, 0);
   }
 
   function moveTo(target) {
