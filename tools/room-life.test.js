@@ -49,7 +49,7 @@ recall.focus(); recall.click();
 assert.strictEqual(document.activeElement, recall, 'recall keeps keyboard focus on the same button');
 assert.strictEqual(recall.textContent, '找它');
 assert.strictEqual(ids['room-life-count'].textContent, '4 在家 · 5 旅游');
-assert.ok(ids['room-life-gift-count'].textContent.includes('共 2 件'));
+assert.ok(ids['room-life-gift-count'].textContent.includes('共 0 件'), 'mid-trip recall does not add furniture');
 assert.strictEqual(ids['room-life-furniture'].children.length, 5);
 var prevented = false;
 ids['btn-room-life-close'].focus();

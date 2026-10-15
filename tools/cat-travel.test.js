@@ -27,9 +27,9 @@ assert.deepStrictEqual(reloaded.list(), travel.list(), 'reload keeps the same tr
 var firstId = trips[0].cat.id;
 assert.strictEqual(travel.recall('missing'), null);
 var recalled = travel.recall(firstId);
-assert.ok(recalled.recalled && recalled.gifts.length >= 1 && recalled.gifts.length <= 2);
-assert.ok(recalled.catnip >= 10 && recalled.catnip <= 50);
-assert.strictEqual(travel.catnip(), recalled.catnip);
+assert.ok(recalled.recalled && recalled.gifts.length === 0, 'mid-trip recall grants no furniture');
+assert.strictEqual(recalled.catnip, 0, 'mid-trip recall grants no catnip');
+assert.strictEqual(travel.catnip(), 0);
 assert.strictEqual(travel.isAway(firstId), false);
 assert.strictEqual(travel.recall(firstId), null, 'double recall cannot grant another reward');
 var before = travel.furniture().reduce(function (sum, entry) { return sum + entry.count; }, 0);

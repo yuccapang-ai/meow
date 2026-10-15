@@ -103,17 +103,21 @@
       var entry = data.cats[id];
       if (!entry || !entry.endsAt) return null;
       advanceEntry(id, now);
-      var gifts = [], quantity = between(1, 2), catnip = between(10, 50), progress = collection.progress(id);
-      for (var index = 0; index < quantity; index++) {
-        var item = furniture[between(0, furniture.length - 1)];
-        data.furniture[item.id] = Math.min(1000000, (data.furniture[item.id] || 0) + 1);
-        gifts.push(item.id);
+      var gifts = [], catnip = 0, progress = collection.progress(id);
+      if (!recalled) {
+        var quantity = between(1, 2);
+        for (var index = 0; index < quantity; index++) {
+          var item = furniture[between(0, furniture.length - 1)];
+          data.furniture[item.id] = Math.min(1000000, (data.furniture[item.id] || 0) + 1);
+          gifts.push(item.id);
+        }
+        catnip = between(10, 50);
+        data.catnip = Math.min(MAX_CATNIP, data.catnip + catnip);
       }
-      data.catnip = Math.min(MAX_CATNIP, data.catnip + catnip);
       entry.startedAt = 0; entry.endsAt = 0; entry.nextAt = nextDeparture(now);
       if (entry.energy < SLEEP_THRESHOLD) entry.sleeping = true;
       entry.energyAt = now;
-      log(progress.cat.name + (recalled ? '被召回啦' : '旅行回来啦') + '，带回' + gifts.map(function (id) {
+      log(recalled ? progress.cat.name + '被召回啦' : progress.cat.name + '旅行回来啦，带回' + gifts.map(function (id) {
         return furniture.filter(function (item) { return item.id === id; })[0].name;
       }).join('、') + '和' + catnip + '猫薄荷', now);
       return { type: 'return', id: id, gifts: gifts, catnip: catnip, recalled: recalled };
