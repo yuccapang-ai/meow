@@ -1,0 +1,146 @@
+{
+  "image": "music-actions-v1.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "听歌打拍子",
+  "frames": [
+    {
+      "index": 0,
+      "left": 28,
+      "top": 57,
+      "width": 214,
+      "height": 175
+    },
+    {
+      "index": 1,
+      "left": 35,
+      "top": 56,
+      "width": 205,
+      "height": 176
+    },
+    {
+      "index": 2,
+      "left": 20,
+      "top": 57,
+      "width": 216,
+      "height": 175
+    },
+    {
+      "index": 3,
+      "left": 28,
+      "top": 50,
+      "width": 202,
+      "height": 182
+    },
+    {
+      "index": 4,
+      "left": 28,
+      "top": 54,
+      "width": 214,
+      "height": 178
+    },
+    {
+      "index": 5,
+      "left": 37,
+      "top": 57,
+      "width": 201,
+      "height": 175
+    },
+    {
+      "index": 6,
+      "left": 29,
+      "top": 54,
+      "width": 208,
+      "height": 178
+    },
+    {
+      "index": 7,
+      "left": 25,
+      "top": 49,
+      "width": 206,
+      "height": 183
+    },
+    {
+      "index": 8,
+      "left": 27,
+      "top": 92,
+      "width": 218,
+      "height": 140
+    },
+    {
+      "index": 9,
+      "left": 27,
+      "top": 111,
+      "width": 214,
+      "height": 121
+    },
+    {
+      "index": 10,
+      "left": 28,
+      "top": 103,
+      "width": 201,
+      "height": 129
+    },
+    {
+      "index": 11,
+      "left": 20,
+      "top": 103,
+      "width": 207,
+      "height": 129
+    },
+    {
+      "index": 12,
+      "left": 43,
+      "top": 21,
+      "width": 169,
+      "height": 211
+    },
+    {
+      "index": 13,
+      "left": 45,
+      "top": 16,
+      "width": 186,
+      "height": 216
+    },
+    {
+      "index": 14,
+      "left": 42,
+      "top": 23,
+      "width": 175,
+      "height": 209
+    },
+    {
+      "index": 15,
+      "left": 42,
+      "top": 21,
+      "width": 175,
+      "height": 211
+    }
+  ]
+}

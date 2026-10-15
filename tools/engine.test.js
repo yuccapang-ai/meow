@@ -125,20 +125,45 @@ let guard = 0;
 while (s4.pendingShake && guard++ < 200) E.shake(s4);
 eq('infinite shake eventually matches', s4.ended === null && s4.pendingShake === false, true);
 
-// 幸运色：一行 0 色 + 幸运色 0 → 5 + 3 只幸运 = 8
-r = E.evaluate([0, 0, 0, 1, 2, 3, 4, 5, 6], null, 0);
-eq('lucky line bonus', r.reward.lucky, 3);
-eq('lucky line total', r.reward.total, 8);
-// 幸运色不在消除里 → 无加成
-r = E.evaluate([0, 0, 0, 1, 2, 3, 4, 5, 6], null, 1);
-eq('lucky absent', r.reward.lucky, 0);
-// 大满贯里恰好一只幸运色 → 5 + 5 + 1
-r = E.evaluate([0, 1, 2, 3, 4, 5, 6, 7, 8], null, 4);
-eq('lucky slam total', r.reward.total, 11);
+// 幸运色：抽到即 +1，与消除无关。判定本身不含幸运加成
+r = E.evaluate([0, 0, 0, 1, 2, 3, 4, 5, 6]);
+eq('evaluate has no lucky reward', r.reward.lucky, undefined);
+eq('line total without lucky', r.reward.total, 5);
+// 只有 1 色 → 9 格全是幸运色：抽到 9 只 → +9，判定 8 线 +40，清空 +5
+const sL = E.startRun({ startPacks: 20, colors: 1 });
+E.setLucky(sL, 0);
+let dL = E.deal(sL);
+eq('lucky drawn cells', dL.lucky, [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+eq('lucky bonus on draw', dL.luckyBonus, 9);
+eq('lucky counted on draw', sL.counts.lucky, 9);
+eq('lucky bonus in packs', sL.packs, 20 - 9 + 9 + 45);
+eq('lucky bonus in earned', sL.earned, 9 + 45);
+eq('bestRound includes lucky', sL.bestRound, 54);
+// 幸运色不是抽到的颜色 → 无加成
+const sLb = E.startRun({ startPacks: 20, colors: 1 });
+E.setLucky(sLb, 3);
+dL = E.deal(sLb);
+eq('lucky absent on draw', [dL.lucky.length, dL.luckyBonus, sLb.counts.lucky], [0, 0, 0]);
+// 没选幸运色 → 无加成
+const sLc = E.startRun({ startPacks: 20, colors: 1 });
+dL = E.deal(sLc);
+eq('no lucky chosen', dL.luckyBonus, 0);
 // 孤龟不可能匹配 → 不进入摇晃，直接结束
 const s5 = E.startRun({ startPacks: 1, shakeLimit: Infinity });
 E.deal(s5);
 eq('hopeless board ends immediately', s5.ended, 'nomatch');
+// 零消除但幸运返还让卡包 > 0 且盘上有空格 → 不结束，下一轮继续发牌（回归：返还的卡包曾被直接吞掉）
+const sR = E.startRun({ startPacks: 1, colors: 1 });
+E.setLucky(sR, 0);
+let d6 = E.deal(sR);
+eq('lucky refund keeps run alive', [d6.luckyBonus, sR.packs, sR.ended, d6.needShake], [1, 1, null, false]);
+d6 = E.deal(sR);
+eq('refunded pack is dealt next round', [d6 !== null, d6.filled.length, d6.board[1]], [true, 1, 0]);
+eq('refund round can still match', [d6.result.pairs.length, sR.stash[0]], [1, 2]);
+// 没有幸运返还、卡包为 0 的零消除仍然结束
+const sRb = E.startRun({ startPacks: 1, colors: 9 });
+E.deal(sRb);
+eq('no refund still ends', [sRb.packs, sRb.ended], [0, 'nomatch']);
 
 // 暂存区与得分：被消除的棋子按颜色进 stash；得分 = 暂存区 + 盘上剩余（= 开出的总数）
 const s7 = E.startRun({ startPacks: 20 });
@@ -167,6 +192,31 @@ s10.board = [4, null, null, null, null, null, null, null, 4];
 s10.pendingShake = true;
 E.shake(s10);
 eq('shake removal goes to stash', s10.stash[4], 2);
+
+// 可复现：同一种子 + 同一幸运色 → 整局（含摇晃）逐步一致；不同种子应产生不同走向
+function runSeeded(seed, lucky) {
+  const st = E.startRun({ startPacks: 20 }, E.seededRandom(seed));
+  E.setLucky(st, lucky);
+  const trace = [];
+  let g = 0;
+  while (!st.ended && g++ < 500) {
+    if (st.pendingShake) { trace.push(['s', E.shake(st).board]); continue; }
+    const d = E.deal(st);
+    if (!d) break;
+    trace.push(['d', d.board]);
+  }
+  return { trace, spent: st.spent, stash: st.stash, board: st.board, ended: st.ended };
+}
+eq('seeded run replays identically', runSeeded(123456, 4), runSeeded(123456, 4));
+eq('seeded rng in [0,1)', E.seededRandom(7)() < 1 && E.seededRandom(7)() >= 0, true);
+eq('seeded rng deterministic', E.seededRandom(99)(), E.seededRandom(99)());
+{
+  let differ = false;
+  for (let k = 1; k <= 20 && !differ; k++) differ = JSON.stringify(runSeeded(k, 0).trace) !== JSON.stringify(runSeeded(k + 1000, 0).trace);
+  eq('different seeds diverge', differ, true);
+}
+// 缺省仍用 Math.random
+eq('default rng is Math.random', E.startRun().rng, Math.random);
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASS');
 process.exit(fails ? 1 : 0);

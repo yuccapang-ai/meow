@@ -1,0 +1,146 @@
+{
+  "image": "party-actions-v1.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "吹派对喇叭",
+  "frames": [
+    {
+      "index": 0,
+      "left": 23,
+      "top": 38,
+      "width": 218,
+      "height": 194
+    },
+    {
+      "index": 1,
+      "left": 28,
+      "top": 38,
+      "width": 216,
+      "height": 194
+    },
+    {
+      "index": 2,
+      "left": 22,
+      "top": 33,
+      "width": 224,
+      "height": 199
+    },
+    {
+      "index": 3,
+      "left": 27,
+      "top": 30,
+      "width": 208,
+      "height": 202
+    },
+    {
+      "index": 4,
+      "left": 26,
+      "top": 34,
+      "width": 219,
+      "height": 198
+    },
+    {
+      "index": 5,
+      "left": 24,
+      "top": 33,
+      "width": 219,
+      "height": 199
+    },
+    {
+      "index": 6,
+      "left": 20,
+      "top": 35,
+      "width": 224,
+      "height": 197
+    },
+    {
+      "index": 7,
+      "left": 22,
+      "top": 34,
+      "width": 213,
+      "height": 198
+    },
+    {
+      "index": 8,
+      "left": 29,
+      "top": 55,
+      "width": 195,
+      "height": 177
+    },
+    {
+      "index": 9,
+      "left": 30,
+      "top": 77,
+      "width": 193,
+      "height": 155
+    },
+    {
+      "index": 10,
+      "left": 27,
+      "top": 89,
+      "width": 191,
+      "height": 143
+    },
+    {
+      "index": 11,
+      "left": 27,
+      "top": 97,
+      "width": 199,
+      "height": 135
+    },
+    {
+      "index": 12,
+      "left": 65,
+      "top": 17,
+      "width": 163,
+      "height": 215
+    },
+    {
+      "index": 13,
+      "left": 28,
+      "top": 16,
+      "width": 207,
+      "height": 216
+    },
+    {
+      "index": 14,
+      "left": 23,
+      "top": 18,
+      "width": 216,
+      "height": 214
+    },
+    {
+      "index": 15,
+      "left": 47,
+      "top": 23,
+      "width": 168,
+      "height": 209
+    }
+  ]
+}

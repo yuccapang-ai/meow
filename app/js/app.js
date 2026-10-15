@@ -8,10 +8,15 @@
   var Skin = window.TurtleSkin;
   var S = window.TurtleShare;
   var Fortune = window.TurtleFortune;
+  var Sound = window.TurtleSound;
+  var Board = window.TurtleBoard;
+  var Room = window.TurtleRoom;
+  var Collection = window.TurtleCatCollection.get();
+  var CollectionView = window.TurtleCollectionView;
 
   /* 数值配置（待调） */
   var CONFIG = { startPacks: 20, shakeLimit: 1 };
-  var STORAGE_KEY = 'ttddp.best.v2'; // v1 记最长轮次；v2 改记最高得分（暂存区 + 盘上剩余）
+  var STORAGE_KEY = 'ttddp.best.v2'; // v1 记最长轮次；v2 改记最高得分（暂存区 + 盘上剩余）；cats = 累计获得的猫猫数（皮肤解锁进度）
 
   /* 开发开关：自动发牌（不暴露给玩家），默认开启
    * 第一次手动发牌后持续自动发牌 / 自动摇晃，直到本局结束。
@@ -84,12 +89,12 @@
 
   /* ---------- 本地纪录 ---------- */
   function loadBest() {
-    var def = { score: 0, earned: 0, runs: 0 };
+    var def = { score: 0, earned: 0, runs: 0, cats: 0 };
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return def;
       var o = JSON.parse(raw);
-      return { score: o.score | 0, earned: o.earned | 0, runs: o.runs | 0 };
+      return { score: o.score | 0, earned: o.earned | 0, runs: o.runs | 0, cats: o.cats | 0 };
     } catch (e) { return def; }
   }
   function saveBest(b) {
@@ -97,21 +102,179 @@
   }
   var best = loadBest();
   function renderBest() {
-    var map = { 'best-score': best.score, 'best-earned': best.earned, 'best-runs': best.runs };
+    var map = { 'best-score': best.score, 'best-earned': best.earned, 'best-runs': best.runs, 'best-cats': best.cats };
     for (var id in map) { var el = $(id); if (el) el.textContent = map[id]; }
   }
+  // 存档里的套系若还没解锁（比如清了进度），回到默认套系
+  if (!Skin.isUnlocked(Skin.get(), best.score)) Skin.set('cats');
+
+  /* ---------- 皮肤解锁进度 ----------
+   * 解锁条件 = 单局历史最高分（结算的「只」数）。有待解锁套系时，结算前先弹进度条。 */
+  /* 结算页「再来一局」下方的小进度条：全部解锁后隐藏 */
+  function renderResultUnlock(bestScore) {
+    var box = $('result-unlock'), next = Skin.nextLocked(bestScore);
+    if (!next) { box.hidden = true; return; }
+    box.hidden = false;
+    $('result-unlock-fill').style.width = (Math.min(bestScore, next.unlock) / next.unlock * 100) + '%';
+    $('result-unlock-text').textContent = '单局 ' + next.unlock + ' 只解锁「' + next.name + '」 · 历史最高 ' + bestScore;
+  }
+  /* 结算前的进度弹层：深色条 = 历史最高（破纪录时从旧纪录涨到新纪录），浅色条 = 本局得分；涨满门槛即解锁。
+   * 点任意位置 / 「查看结算」/ 数秒后调用 done 进入结算 */
+  var unlockTimer = 0, unlockDone = null;
+  var UNLOCK_DELAY = 500, UNLOCK_DUR = 1200, UNLOCK_HOLD = 3500, UNLOCK_HOLD_WIN = 6000;
+  function showUnlockProgress(prevBest, newBest, runScore, done) {
+    var target = Skin.nextLocked(prevBest); // 以本局前的纪录找目标，本局可能正好把它解锁
+    var need = target.unlock, unlocked = newBest >= need, record = newBest > prevBest;
+    var box = $('unlock-sheet'), heroBox = $('unlock-hero'), bar = $('unlock-bar');
+    var fill = $('unlock-fill'), ghost = $('unlock-ghost'), count = $('unlock-count'), num = $('unlock-num'), hint = $('unlock-hint');
+    var fx0 = Skin.fx(0, target), acc = fx0.color;
+    // 强调色取目标套系首款的主题色，标题带 / 光晕 / 进度条 / 提示都跟着走
+    box.style.setProperty('--acc', acc);
+    box.style.setProperty('--acc-soft', hexToRgba(acc, 0.16));
+    box.style.setProperty('--acc-faint', hexToRgba(acc, 0.07));
+    // 复位到「进度」态
+    box.classList.remove('is-unlocked');
+    box.removeAttribute('data-theme');
+    bar.classList.remove('is-full');
+    num.classList.remove('is-pop');
+    $('unlock-ribbon').textContent = '皮肤解锁进度';
+    $('unlock-tagline').textContent = 'NEXT SKIN SET';
+    $('unlock-name').textContent = target.name;
+    $('unlock-tag').textContent = '即将解锁';
+    $('unlock-need').textContent = '/ ' + need + ' 只';
+    $('btn-unlock-continue').textContent = '查看结算';
+    // 目标套系剪影轮播：与首页同款
+    heroBox.classList.add('is-silhouette');
+    unlockSkin = target;
+    UnlockHero.stop();
+    UnlockHero.start();
+    function paint(v, g) {
+      var c = Math.min(v, need);
+      fill.style.width = (c / need * 100) + '%';
+      ghost.style.width = (Math.min(g, need) / need * 100) + '%';
+      count.textContent = Math.round(c / need * 100) + '%';
+      num.textContent = Math.round(c);
+    }
+    paint(prevBest, 0);
+    hint.textContent = '本局 ' + runScore + ' 只' + (record ? ' · 新纪录！' : '');
+    Sound.play('open');
+    setOverlay('unlock', true);
+    unlockDone = function () {
+      if (!unlockDone) return;
+      unlockDone = null;
+      clearTimeout(unlockTimer);
+      UnlockHero.stop();
+      setOverlay('unlock', false);
+      done();
+    };
+    var start = 0, lastTick = -1;
+    function frame(ts) {
+      if (!unlockDone) return; // 已被点掉
+      if (!start) start = ts;
+      var k = Math.min(1, (ts - start) / UNLOCK_DUR);
+      k = 1 - Math.pow(1 - k, 3);
+      var v = prevBest + (Math.min(newBest, need) - prevBest) * k;
+      paint(v, runScore * k);
+      var tick = Math.floor((record ? v / need : runScore * k / need) * 14);
+      if (tick !== lastTick && k < 1) { lastTick = tick; Sound.play('fan'); }
+      if (k < 1) { requestAnimationFrame(frame); return; }
+      if (unlocked) celebrate(); else settle();
+    }
+    /* 没解锁：纪录有涨就让数字弹一下 */
+    function settle() {
+      if (record) { num.classList.add('is-pop'); Sound.play('lucky'); }
+      else Sound.play('womp');
+      hint.textContent = (record ? '新纪录！' : '') + '还差 ' + (need - newBest) + ' 只解锁「' + target.name + '」';
+      unlockTimer = setTimeout(function () { if (unlockDone) unlockDone(); }, UNLOCK_HOLD);
+    }
+    /* 解锁：白闪 → 标题带 / 副标 / 标签换成解锁文案 → 底纹换成该套系首款的结算主题 → 彩色猫猫重新落下 → 落地时该款粒子 + 彩纸 */
+    function celebrate() {
+      box.classList.add('is-unlocked');
+      box.setAttribute('data-theme', fx0.id);
+      bar.classList.add('is-full');
+      num.classList.add('is-pop');
+      $('unlock-ribbon').textContent = '新套系解锁！';
+      $('unlock-tagline').textContent = 'NEW SKIN SET UNLOCKED';
+      $('unlock-tag').textContent = '已解锁';
+      $('btn-unlock-continue').textContent = '太棒了，去看结算';
+      hint.textContent = '解锁「' + target.name + '」！首页「皮肤」里换上';
+      UnlockHero.stop();
+      heroBox.classList.remove('is-silhouette');
+      UnlockHero.start(); // 彩色猫猫从头落下
+      Sound.play('record');
+      setTimeout(function () { Sound.play('shimmer'); }, 250);
+      FX.attach($('unlock'));
+      FX.celebrate(box, 2);
+      setTimeout(function () { // 落地瞬间：该款粒子在猫猫身上炸开，再补一轮彩纸
+        if (!unlockDone) return;
+        FX.burst(fx0.id, heroBox, 1.8, fx0.color);
+        FX.celebrate(box, 1.3);
+        Sound.play('catLand');
+      }, 900 * 0.42);
+      unlockTimer = setTimeout(function () { if (unlockDone) unlockDone(); }, UNLOCK_HOLD_WIN);
+    }
+    setTimeout(function () { requestAnimationFrame(frame); }, UNLOCK_DELAY);
+  }
+  $('unlock').addEventListener('click', function () { if (unlockDone) unlockDone(); });
 
   /* ---------- 屏幕与覆盖层 ---------- */
   function showScreen(name) {
+    if (name !== 'room') Room.leave();
     var screens = document.querySelectorAll('.screen');
     for (var i = 0; i < screens.length; i++) {
       screens[i].classList.toggle('is-active', screens[i].id === 'screen-' + name);
     }
+    if (name === 'room') Room.enter();
+    if (name === 'room' || name === 'collection') CollectionView.render();
   }
+
+  /* 猫猫 Q 弹轮播：某套系 9 个款式轮流落下 → 停留 → 掉出画面。
+   * 皮肤解锁进度弹窗用目标套系的剪影。getSkin() 返回要展示的套系 */
+  function makeHero(box, getSkin) {
+    var cat = box.querySelector('.home__hero-cat-body');
+    var timer = 0, idx = -1, running = false;
+    var DROP = 900, HOLD = 1300, LEAVE = 500; // 与 CSS 里 hero-fall / hero-hop-out 时长一致
+    function later(fn, ms) { timer = setTimeout(fn, ms); }
+    function drop() {
+      if (!running) return;
+      idx = (idx + 1) % 9;
+      Skin.paint(cat, idx, getSkin());
+      box.classList.remove('is-leave');
+      void cat.offsetWidth; // 重启动画
+      box.classList.add('is-drop');
+      later(leave, DROP + HOLD);
+    }
+    function leave() {
+      if (!running) return;
+      box.classList.remove('is-drop');
+      void cat.offsetWidth;
+      box.classList.add('is-leave');
+      later(drop, LEAVE);
+    }
+    function start() {
+      if (running) return;
+      running = true;
+      drop();
+    }
+    function stop() {
+      running = false;
+      clearTimeout(timer); timer = 0;
+      box.classList.remove('is-drop', 'is-leave');
+    }
+    return { start: start, stop: stop };
+  }
+  var unlockSkin = null;
+  var UnlockHero = makeHero($('unlock-hero'), function () { return unlockSkin; });
   function setOverlay(id, open) { $(id).classList.toggle('is-open', open); }
   /* 拉锁转场：图标落下裂开旧屏，盖满时执行 mid（切屏 / 重建 DOM）。图标色固定为海报橙红（--ember），与款式色无关。 */
-  function wipeTo(mid, color) {
-    return Wipe.run({ shape: Skin.get().wipe, color: color, mid: mid });
+  function wipeTo(mid, color, done) {
+    return Wipe.run({ shape: Skin.get().wipe, color: color, mid: mid, done: done, onPhase: onWipePhase });
+  }
+  function onWipePhase(p) {
+    if (p === 'fall') { Sound.play('fall'); Sound.play('zip'); }
+    else if (p === 'land') Sound.play('land');
+    else if (p === 'cover') Sound.play('cover');
+    else if (p === 'reveal') Sound.play('reveal');
   }
 
   /* ---------- 棋盘 DOM ---------- */
@@ -242,15 +405,18 @@
     return { push: push, reset: reset, start: start, stop: stop, setRate: setRate };
   })();
 
-  /* 生成一条播报：<款式名><模板>（+N 卡包，幸运 +M） */
-  function headline(kind, colorIdx, gain, bonus) {
+  /* 生成一条播报：<款式名><模板>（+N 卡包） */
+  function headline(kind, colorIdx, gain) {
     var body;
     if (kind === 'slam') body = '九位大咖同框合影，全场轰动';
     else body = Skin.itemName(colorIdx) + Skin.news(colorIdx)[kind];
-    return body + '（+' + gain + ' 卡包' + (bonus ? '，幸运 +' + bonus : '') + '）';
+    return body + '（+' + gain + ' 卡包）';
   }
 
-  function showShake(show) { $('shake').classList.toggle('is-show', show); }
+  function showShake(show) {
+    if (show && !$('shake').classList.contains('is-show')) Sound.play('womp');
+    $('shake').classList.toggle('is-show', show);
+  }
 
   /* ---------- 暂存区（被消除的棋子按款式计数，HUD 显示总数） ---------- */
   var stashItems = [];
@@ -297,10 +463,17 @@
   /* ---------- HUD ---------- */
   var state = null;
   var busy = false;
+  /* ---------- 回放记录 ----------
+   * 每局开始时生成一个随机种子驱动引擎的随机源，一局的走向只由 { seed, lucky, cfg } 决定
+   * （玩家唯一的决策「摇晃」是必选项，不摇等于弃局），所以记录这三样就能完整重播。
+   * runRecord：当前这局的记录；lastRecord：最近一局「结算过」的记录，供结算页「重播本局」；
+   * replay：正在回放的记录，null 表示正常对局。回放中没有发牌遮罩、不重新结算，结束后重新打开原来的结算页。 */
+  var runRecord = null, lastRecord = null, replay = null;
 
   function bumpPacks(kind, color) {
     var w = $('hud-packs-wrap');
     w.style.setProperty('--fx', color || 'transparent');
+    Sound.play(kind === 'is-drop' ? 'dealDrop' : 'coin');
     w.classList.remove('is-bump', 'is-drop');
     // 强制重启动画
     void w.offsetWidth;
@@ -316,6 +489,7 @@
     var cost = Math.min(empties, state.packs);
     var sub;
     if (state.ended) sub = '本局已结束';
+    else if (replay) sub = '回放中';
     else if (DEV.autoDeal && state.round > 0) sub = '自动发牌中';
     else if (state.pendingShake) sub = '先摇一摇棋盘';
     else if (cost >= empties) sub = '用 ' + cost + ' 个卡包填满';
@@ -329,7 +503,8 @@
    * 手动模式：保持底栏发牌按钮。 */
   function renderDealMode() {
     $('screen-game').classList.toggle('is-auto', DEV.autoDeal);
-    var show = DEV.autoDeal && !!state && !state.ended && state.round === 0 && !state.pendingShake && !busy;
+    $('screen-game').classList.toggle('is-replay', !!replay);
+    var show = DEV.autoDeal && !replay && !!state && !state.ended && state.round === 0 && !state.pendingShake && !busy;
     $('deal-mask').classList.toggle('is-show', show);
   }
 
@@ -338,6 +513,7 @@
    * 节奏：命中高亮 + 预备压扁(0.3s) → [幸运加成飘字] → 本体动作 + 粒子 + 记账(0.5s)。
    * 连线、对子都逐组串行播放。 */
   function thumpBoard() {
+    Sound.play('thump');
     boardWrap.classList.remove('is-thump');
     void boardWrap.offsetWidth;
     boardWrap.classList.add('is-thump');
@@ -358,19 +534,14 @@
       var q, fx0 = Skin.fx(cells[indices[0]].color);
       var word = opts.word != null ? opts.word : fx0.word;
       var color = opts.color || fx0.color;
-      var luckyCells = [];
-      for (q = 0; q < indices.length; q++) if (cells[indices[q]].color === state.lucky) luckyCells.push(indices[q]);
-      var bonus = luckyCells.length * R.lucky;
 
+      Sound.play(opts.newsKind === 'slam' ? 'hitSlam' : opts.newsKind === 'line' ? 'hitLine' : 'hitPair');
       for (q = 0; q < indices.length; q++) cells[indices[q]].el.classList.add('is-hit', opts.hitClass);
-      News.push(headline(opts.newsKind || 'pair', cells[indices[0]].color, opts.gain, bonus), opts.newsKind !== 'pair');
+      News.push(headline(opts.newsKind || 'pair', cells[indices[0]].color, opts.gain), opts.newsKind !== 'pair');
       floatText(opts.floatAt, word + ' +' + opts.gain, opts.kind, color);
       await wait(300);
-      if (bonus) {
-        for (q = 0; q < luckyCells.length; q++) floatText(cells[luckyCells[q]].el, '★ +' + R.lucky, 'lucky');
-        await wait(320);
-      }
       // 本体动作 + 粒子 + 记账同时发生
+      Sound.play('pop');
       for (q = 0; q < indices.length; q++) {
         var c = cells[indices[q]];
         var fx = Skin.fx(c.color);
@@ -378,7 +549,7 @@
         FX.burst(fx.id, c.el, opts.intensity || 1, fx.color);
       }
       if (opts.thump) thumpBoard();
-      var gain = opts.gain + bonus;
+      var gain = opts.gain;
       shownPacks += gain;
       shownEarned += gain;
       $('hud-packs').textContent = shownPacks;
@@ -427,6 +598,7 @@
       News.push('盘面清空，今日收摊大吉（+' + res.reward.clear + ' 卡包）', true);
       floatText(boardEl, '清空 +' + res.reward.clear, 'gold');
       FX.celebrate(boardEl, 2);
+      Sound.play('clear');
       thumpBoard();
       await wait(500);
       shownPacks += res.reward.clear;
@@ -444,7 +616,7 @@
     if (out.needShake) {
       showShake(true);
       busy = false;
-      if (DEV.autoDeal) {
+      if (DEV.autoDeal || replay) {
         await wait(DEV.autoDelay + 300);
         if (state === runState && state.pendingShake && !busy) shakeBoard();
       }
@@ -456,7 +628,7 @@
       finishRun();
     } else {
       $('btn-deal').disabled = false;
-      if (DEV.autoDeal) {
+      if (DEV.autoDeal || replay) {
         await wait(DEV.autoDelay);
         if (state === runState && !state.ended && !state.pendingShake && !busy) playRound();
       }
@@ -475,23 +647,39 @@
 
     var res = out.result;
     var i, k;
+    var runState = state, R = state.cfg.reward;
 
-    $('hud-packs').textContent = state.packs - res.reward.total; // 先显示扣费后的数字
+    // 先显示扣费后的数字；幸运款抽到时的 +1 与本轮消除返还都还没加，随演出逐步加回
+    var shownPacks = state.packs - res.reward.total - out.luckyBonus;
+    var shownEarned = state.earned - res.reward.total - out.luckyBonus;
+    $('hud-packs').textContent = shownPacks;
     bumpPacks('is-drop');
+    /* 抽到幸运款：在这只猫落格的瞬间飘 ★ +1 并即时入账（无论之后是否消除） */
+    function luckyDrawn(idx) {
+      if (state !== runState) return;
+      Sound.play('lucky');
+      floatText(cells[idx].el, '★ +' + R.lucky, 'lucky');
+      shownPacks += R.lucky;
+      shownEarned += R.lucky;
+      $('hud-packs').textContent = shownPacks;
+      $('hud-earned').textContent = shownEarned;
+      bumpPacks('is-bump', '#e8590c');
+    }
     var dealt = [];
     for (k = 0; k < out.filled.length; k++) dealt.push(out.board[out.filled[k]]);
     await playPackOpen(dealt);
     // 逐张快速撕开：每 TEAR_STEP 撕一张，撕开 TEAR_TO_FLY 后这张票的猫飞出、票身爆开
-    var TEAR_STEP = 55, TEAR_TO_FLY = 220;
+    var TEAR_STEP = 55, TEAR_TO_FLY = 220, FLY = 470;
     for (k = 0; k < out.filled.length; k++) {
       i = out.filled[k];
       after(k * TEAR_STEP, tearTicket.bind(null, k));
       flyIn(i, out.board[i], k * TEAR_STEP + TEAR_TO_FLY, tickets[k].body);
       after(k * TEAR_STEP + TEAR_TO_FLY, burstTicket.bind(null, k));
+      if (out.lucky.indexOf(i) >= 0) after(k * TEAR_STEP + TEAR_TO_FLY + FLY, luckyDrawn.bind(null, i));
     }
     var lastFly = (out.filled.length - 1) * TEAR_STEP + TEAR_TO_FLY;
     after(lastFly + 300, clearTickets);
-    await wait(lastFly + 470 + 260);
+    await wait(lastFly + FLY + 260);
 
     if (res.removed.length === 0) {
       if (!out.needShake) await wait(700);
@@ -556,6 +744,7 @@
 
   /* 生成 N 张票并扇形排开（先缩在中心，再过渡到各自位置）。colors[k] 为第 k 张票里那只猫 */
   function fanTickets(colors) {
+    Sound.burst('fan', Math.min(colors.length, 9), 30);
     var n = colors.length, bw = boardWrap.clientWidth;
     var w = bw * (n >= 6 ? 0.2 : (n >= 4 ? 0.24 : 0.28)), h = w * 100 / 62;
     var R = bw * 0.7;
@@ -599,6 +788,7 @@
     t.el.style.transitionDelay = '';
     t.el.classList.add('is-tear');
     FX.burst('scraps', t.stub, 0.8);
+    Sound.play('tear');
   }
 
   /* 第 k 张票的票身爆开（在它的猫飞出时调用） */
@@ -630,6 +820,7 @@
         c.inner.classList.remove('is-flying');
         c.el.classList.add('is-landed');
         FX.burst('dust', c.el, 1);
+        Sound.play('catLand');
         after(300, function () { c.el.classList.remove('is-landed'); });
       });
     });
@@ -648,6 +839,7 @@
     boardWrap.classList.remove('is-shaking');
     void boardWrap.offsetWidth;
     boardWrap.classList.add('is-shaking');
+    Sound.burst('rattle', 6, 70);
     await wait(560);
     boardWrap.classList.remove('is-shaking');
 
@@ -691,10 +883,12 @@
     var cur = Skin.get();
     for (var i = 0; i < skins.length; i++) {
       var s = skins[i];
+      var locked = !Skin.isUnlocked(s, best.score);
       var item = document.createElement('button');
       item.type = 'button';
-      item.className = 'skin-item' + (s === cur ? ' is-active' : '');
+      item.className = 'skin-item' + (s === cur ? ' is-active' : '') + (locked ? ' is-locked' : '');
       item.setAttribute('data-skin', s.id);
+      if (locked) item.setAttribute('aria-disabled', 'true');
       var previews = document.createElement('div');
       previews.className = 'skin-item__previews';
       for (var p = 0; p < 3; p++) {
@@ -707,17 +901,35 @@
       var name = document.createElement('span');
       name.className = 'skin-item__name';
       name.textContent = s.name;
+      if (locked) { // 名字后面跟一枚「未解锁」小标
+        var lockTag = document.createElement('span');
+        lockTag.className = 'skin-item__lock';
+        lockTag.textContent = '未解锁';
+        name.appendChild(lockTag);
+      }
       var meta = document.createElement('span');
       meta.className = 'skin-item__meta';
-      meta.textContent = s.items[0].name + '、' + s.items[1].name + '、' + s.items[2].name + ' 等 9 款';
+      meta.textContent = locked
+        ? '单局 ' + s.unlock + ' 只解锁 · 历史最高 ' + best.score
+        : s.items[0].name + '、' + s.items[1].name + '、' + s.items[2].name + ' 等 9 款';
       text.appendChild(name);
       text.appendChild(meta);
-      var check = document.createElement('span');
-      check.className = 'skin-item__check';
-      check.textContent = '✓';
       item.appendChild(previews);
       item.appendChild(text);
-      item.appendChild(check);
+      if (locked) { // 整行宽的小进度条，换行排在下面
+        var bar = document.createElement('div');
+        bar.className = 'pbar pbar--mini skin-item__bar';
+        var fill = document.createElement('div');
+        fill.className = 'pbar__fill';
+        fill.style.width = (Math.min(best.score, s.unlock) / s.unlock * 100) + '%';
+        bar.appendChild(fill);
+        item.appendChild(bar);
+      } else {
+        var check = document.createElement('span');
+        check.className = 'skin-item__check';
+        check.textContent = '✓';
+        item.appendChild(check);
+      }
       list.appendChild(item);
     }
   }
@@ -726,7 +938,15 @@
     var t = e.target;
     while (t && t !== this && !(t.getAttribute && t.getAttribute('data-skin'))) t = t.parentNode;
     if (!t || t === this) return;
+    if (t.classList.contains('is-locked')) { // 未解锁：抖一下 + 提示音，不切换
+      Sound.play('womp');
+      t.classList.remove('is-shake');
+      void t.offsetWidth;
+      t.classList.add('is-shake');
+      return;
+    }
     if (Skin.set(t.getAttribute('data-skin'))) {
+      Sound.play('tap');
       buildSkinList();
       Skin.preload();
     }
@@ -744,6 +964,7 @@
 
   /* ---------- 开局选幸运款 ---------- */
   var luckyGridBuilt = false;
+  var luckySpinning = false;
 
   function buildLuckyGrid() {
     var grid = $('lucky-grid');
@@ -753,6 +974,7 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'lucky-opt';
+      btn.style.setProperty('--i', c);
       btn.setAttribute('aria-label', Skin.itemName(c));
       btn.setAttribute('data-color', c);
       var sp = document.createElement('div');
@@ -768,37 +990,139 @@
   }
 
   $('lucky-grid').addEventListener('click', function (e) {
+    if (luckySpinning) return;
     var t = e.target;
     while (t && t !== this && !(t.getAttribute && t.getAttribute('data-color') !== null)) t = t.parentNode;
     if (!t || t === this) return;
     if (Wipe.isActive()) return;
     var color = parseInt(t.getAttribute('data-color'), 10);
-    setOverlay('lucky', false);
-    wipeTo(function () { startRun(color); });
+    commitLuckyPick(color);
   });
 
   function openLuckyPicker() {
     buildLuckyGrid();
+    renderLuckySkinName();
+    resetLuckyGrid();
     setOverlay('result', false);
+    Sound.bgm.duck(false);
+    Sound.play('open');
     setOverlay('lucky', true);
   }
 
+  /* 套系名 + 左右箭头：不用打开「皮肤」弹层就能在选幸运款时切换套系，切完当场重建九宫格 */
+  function renderLuckySkinName() { $('lucky-skin-name').textContent = Skin.get().name; }
+  function switchLuckySkin(step) {
+    if (luckySpinning || Wipe.isActive()) return;
+    var skins = Skin.list(), cur = Skin.get(), idx = 0;
+    for (var i = 0; i < skins.length; i++) if (skins[i] === cur) { idx = i; break; }
+    var next = null, j = idx; // 跳过未解锁的套系
+    for (var n = 0; n < skins.length; n++) {
+      j = (j + step + skins.length) % skins.length;
+      if (Skin.isUnlocked(skins[j], best.score)) { next = skins[j]; break; }
+    }
+    if (!next || !Skin.set(next.id)) return;
+    Sound.play('tap');
+    buildLuckyGrid();
+    renderLuckySkinName();
+    Skin.preload();
+  }
+  $('lucky-skin-prev').addEventListener('click', function () { switchLuckySkin(-1); });
+  $('lucky-skin-next').addEventListener('click', function () { switchLuckySkin(1); });
+
+  /* 随机演出：逐格高亮扫过棋盘，像转盘一样先快速转上两圈多再逐渐刹停，定格在选中的目标款式上再回调
+   * 每格间隔按三次方缓动从 SPIN_FAST 拉长到 SPIN_SLOW：前段几乎等速飞快，只在临近停下时才明显变慢 */
+  var SPIN_STEPS = 18, SPIN_FAST = 42, SPIN_SLOW = 520, SPIN_HOLD = 380;
+  function spinLuckyPick(done) {
+    var grid = $('lucky-grid');
+    var opts = grid.querySelectorAll('.lucky-opt');
+    var target = Math.floor(Math.random() * 9);
+    var n = SPIN_STEPS;
+    var delays = [];
+    for (var s = 0; s < n - 1; s++) {
+      var t = s / (n - 2);
+      delays.push(Math.round(SPIN_FAST + (SPIN_SLOW - SPIN_FAST) * t * t * t));
+    }
+    var start = ((target - (n - 1)) % 9 + 9) % 9;
+    var prev = -1;
+    luckySpinning = true;
+    grid.classList.add('is-spinning');
+    function step(i) {
+      if (prev >= 0) opts[prev].classList.remove('is-spinlit');
+      var idx = (start + i) % 9;
+      var last = i === n - 1;
+      opts[idx].classList.add(last ? 'is-picked' : 'is-spinlit');
+      Sound.play('fan');
+      prev = idx;
+      if (!last) { setTimeout(function () { step(i + 1); }, delays[i]); return; }
+      setTimeout(function () { done(target); }, SPIN_HOLD); // 定格片刻后交给展示阶段，状态由 showcase / reset 收尾
+    }
+    step(0);
+  }
+
+  /* 选中展示（手动 / 随机共用）：其他格、说明与随机按钮淡出，选中格放大移到棋盘中央停留，让玩家看清选了谁再进转场
+   * 位移量按选中格中心到棋盘中心的差写进 --dx / --dy，由 CSS 过渡完成 */
+  var SHOWCASE_MS = 1100;
+  function showcaseLuckyPick(idx, done) {
+    var grid = $('lucky-grid');
+    var el = grid.querySelectorAll('.lucky-opt')[idx];
+    // 用布局偏移而不是 getBoundingClientRect：弹层入场动画（rise）带 transform，会让包围盒失真
+    var dx = (grid.offsetLeft + grid.offsetWidth / 2) - (el.offsetLeft + el.offsetWidth / 2);
+    var dy = (grid.offsetTop + grid.offsetHeight / 2) - (el.offsetTop + el.offsetHeight / 2);
+    el.style.setProperty('--dx', dx.toFixed(1) + 'px');
+    el.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    luckySpinning = true;
+    grid.classList.remove('is-spinning');
+    el.classList.remove('is-spinlit', 'is-picked');
+    el.classList.add('is-chosen');
+    $('lucky').classList.add('is-showcase');
+    $('lucky-title').textContent = '幸运伙伴：' + Skin.itemName(idx);
+    Sound.play('select');
+    setTimeout(function () { done(idx); }, SHOWCASE_MS);
+  }
+  /* 复位选款弹层：清掉演出 / 展示残留的类与变量，供关闭后与再次打开前调用 */
+  function resetLuckyGrid() {
+    var grid = $('lucky-grid');
+    grid.classList.remove('is-spinning');
+    $('lucky').classList.remove('is-showcase');
+    var opts = grid.querySelectorAll('.lucky-opt');
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].classList.remove('is-spinlit', 'is-picked', 'is-chosen');
+      opts[i].style.removeProperty('--dx');
+      opts[i].style.removeProperty('--dy');
+    }
+    $('lucky-title').textContent = '选一只幸运伙伴';
+    luckySpinning = false;
+  }
+  /* 确认选中：先展示，再关弹层进转场开局 */
+  function commitLuckyPick(color) {
+    showcaseLuckyPick(color, function () {
+      setOverlay('lucky', false);
+      resetLuckyGrid();
+      wipeTo(function () { startRun(color); });
+    });
+  }
+
   /* ---------- Run 开始 / 结束 ---------- */
-  function startRun(lucky) {
-    state = E.startRun(CONFIG);
+  /* rec：回放记录 { seed, lucky, cfg }；缺省为新开一局（随机种子） */
+  function startRun(lucky, rec) {
+    replay = rec || null;
+    runRecord = rec || { seed: (Math.random() * 4294967296) >>> 0, lucky: lucky, cfg: CONFIG,
+      id: Date.now().toString(36) + '-' + Math.random().toString(36).slice(2), skin: Skin.get().id, settled: false };
+    state = E.startRun(runRecord.cfg, E.seededRandom(runRecord.seed));
     E.setLucky(state, lucky);
     Fortune.prepare(state.cfg);
     stopAmbient();
     FX.attach(boardWrap);
     Skin.paint($('lucky-pill-sprite'), lucky);
-    $('lucky-pill-note').textContent = Skin.itemName(lucky) + ' · 消除时每只 +1';
+    $('lucky-pill-note').textContent = Skin.itemName(lucky) + ' · 抽到时每只 +1';
     buildBoard();
     buildStash();
     renderBoard(state.board);
     if (Speed.get() === 0) Speed.set(1); // 上局暂停着就开新局：解除暂停，保留 2× / 4× 的选择
+    if (!rec && !DEV.autoDeal && Speed.get() !== 1) Speed.set(1); // 手动模式没有倍速控件：回放里调过的倍速回到常速
     renderHud();
     showShake(false);
-    News.reset();
+    News.reset(rec ? '回放中 · 重播上一局' : '');
     $('btn-deal').disabled = false;
     busy = false;
     showScreen('game');
@@ -824,6 +1148,26 @@
     gym:     { every: 700, k: 0.6,  zone: 'edges' },
     painter: { every: 560, k: 0.55, zone: 'all' },
     party:   { every: 420, k: 0.6,  zone: 'top' },
+    // 套系 2「碰瓷猫」
+    carrot:  { every: 600, k: 0.55, zone: 'bottom' },
+    flat:    { every: 900, k: 0.5,  zone: 'top' },
+    peek:    { every: 1100, k: 0.5, zone: 'edges' },
+    box:     { every: 620, k: 0.55, zone: 'bottom' },
+    cool:    { every: 1200, k: 0.5, zone: 'edges' },
+    boba:    { every: 560, k: 0.6,  zone: 'bottom' },
+    cart:    { every: 520, k: 0.55, zone: 'top' },
+    heart:   { every: 480, k: 0.6,  zone: 'all' },
+    rain:    { every: 380, k: 0.6,  zone: 'top' },
+    // 套系 3「周末猫」
+    burger:  { every: 560, k: 0.55, zone: 'bottom' },
+    blanket: { every: 900, k: 0.5,  zone: 'all' },
+    movie:   { every: 520, k: 0.6,  zone: 'top' },
+    selfie:  { every: 1300, k: 0.5, zone: 'edges' },
+    bath:    { every: 480, k: 0.55, zone: 'bottom' },
+    shop:    { every: 600, k: 0.55, zone: 'top' },
+    refill:  { every: 560, k: 0.6,  zone: 'bottom' },
+    book:    { every: 700, k: 0.5,  zone: 'all' },
+    drive:   { every: 640, k: 0.55, zone: 'edges' },
     pop:     { every: 800, k: 0.5,  zone: 'edges' }
   };
   var ambientTimer = 0;
@@ -840,6 +1184,7 @@
     stamp.classList.remove('is-in');
     void stamp.offsetWidth;
     stamp.classList.add('is-in');
+    setTimeout(function () { Sound.play('stamp'); }, 180);
     setTimeout(function () {
       if (!overlay.classList.contains('is-open')) return;
       FX.burst(fxInfo.id, stamp, 1.2 + tier * 0.45, fxInfo.color);
@@ -862,20 +1207,32 @@
   function finishRun() {
     $('btn-deal').disabled = true;
     showShake(false);
+    if (replay) { finishReplay(); return; }
+    if (!runRecord || runRecord.settled) return;
+    runRecord.settled = true;
+    lastRecord = runRecord;
     // 占卜：本局翻开卡包数在蒙特卡洛分布里的百分位 → 4 档运势
     var fortune = Fortune.rate(state.cfg, state.spent);
     var reasonText = '今日运势 ' + fortune.name + ' · 翻开 ' + state.spent + ' 个卡包，超过 ' + fortune.pctText + ' 的' + Skin.get().noun;
     // 最终得分 = 暂存区 + 盘上剩余；不看轮次
     var t = E.tally(state, 3);
+    var milestones = Collection.recordRun(runRecord.skin, t.counts, runRecord.id, false);
+    CollectionView.milestones(milestones);
+    $('result-collection-text').textContent = milestones.length
+      ? '解锁 ' + milestones.length + ' 项新内容 · 去看看'
+      : (runRecord.skin === 'cats' ? '本局收集 +' + t.total + ' · 查看进度' : '查看摸鱼猫收集进度');
     // 结算主题由 Top1 款式决定（持有最多的那一款）；没有任何棋子时退回幸运款
     var themeIdx = (t.top && t.top.length) ? t.top[0].color : state.lucky;
     var fortuneLine = Skin.fortune(themeIdx)[fortune.tier];
     var newRecord = t.total > best.score || state.earned > best.earned;
+    var prevBest = best.score; // 本局前的历史最高，用于解锁进度条起点
     best.runs++;
+    best.cats += t.total;
     if (t.total > best.score) best.score = t.total;
     if (state.earned > best.earned) best.earned = state.earned;
     saveBest(best);
     renderBest();
+    submitDailyRank(t.total);
 
     lastStats = {
       score: t.total, stashed: t.stashed, onBoard: t.onBoard, top: t.top,
@@ -909,7 +1266,7 @@
     var sp = document.createElement('div');
     Skin.paint(sp, state.lucky);
     luckyEl.appendChild(sp);
-    luckyEl.appendChild(document.createTextNode(Skin.itemName(state.lucky) + ' 消除 ' + state.counts.lucky + ' 只，加成 +' + lastStats.luckyBonus));
+    luckyEl.appendChild(document.createTextNode(Skin.itemName(state.lucky) + ' 抽到 ' + state.counts.lucky + ' 只，加成 +' + lastStats.luckyBonus));
     $('result-score').textContent = t.total;
     $('result-breakdown').textContent = '暂存区 ' + t.stashed + ' 只 + 棋盘剩余 ' + t.onBoard + ' 只';
     renderTop3(t.top);
@@ -921,8 +1278,73 @@
     $('result-slams').textContent = lastStats.slams;
     $('result-new-record').classList.toggle('is-show', newRecord);
     $('btn-share').disabled = false;
+    renderResultUnlock(best.score);
+    Sound.bgm.duck(true);
+    function showResult() {
+      Sound.play('result' + fortune.tier);
+      if (fortune.tier === 3) setTimeout(function () { Sound.play('shimmer'); }, 250);
+      if (newRecord) setTimeout(function () { Sound.play('record'); }, 600);
+      setOverlay('result', true);
+      playResultFx(fortune.tier, themeIdx);
+    }
+    // 还有套系没解锁：先弹进度条，点任意位置 / 数秒后再进结算；全解锁则直接结算
+    if (Skin.nextLocked(prevBest)) showUnlockProgress(prevBest, best.score, t.total, showResult);
+    else showResult();
+  }
+
+  /* ---------- 回放 ----------
+   * 结算页「重播本局」：用上一局的记录重开一局，转场落定后自动发牌 / 摇晃直到结束，倍速控件照常可用；
+   * 回放结束不重新结算（纪录 / 排行 / 解锁进度都不再累计），直接重新打开原来的结算页。 */
+  function startReplay() {
+    if (Wipe.isActive() || busy || !lastRecord) return;
+    var rec = lastRecord;
+    Sound.play('tap');
+    setOverlay('result', false);
+    setOverlay('share-preview', false);
+    Sound.bgm.duck(false);
+    wipeTo(function () { startRun(rec.lucky, rec); }, null, function () {
+      after(200, function () {
+        if (state && replay === rec && !busy && !state.ended && state.round === 0) playRound();
+      });
+    });
+  }
+  function finishReplay() {
+    var t = E.tally(state, 3);
+    if (!lastStats || t.total !== lastStats.score) console.warn('[replay] 回放结果与原局不一致', t.total, lastStats && lastStats.score);
+    News.push('回放结束', true);
+    var tier = lastStats ? lastStats.fortuneTier : 0;
+    var themeIdx = lastStats ? lastStats.themeIdx : state.lucky;
+    Sound.bgm.duck(true);
+    Sound.play('result' + tier);
     setOverlay('result', true);
-    playResultFx(fortune.tier, themeIdx);
+    playResultFx(tier, themeIdx);
+  }
+
+  /* ---------- 每日排行 ---------- */
+  var rankSeq = 0;
+  /* 上传本局得分到每日榜；结算页得分下方显示今日名次。失败静默，不影响流程 */
+  function submitDailyRank(score) {
+    var my = ++rankSeq;
+    var el = $('result-rank');
+    if (!Board.enabled || score <= 0) { el.hidden = true; return; } // 功能关闭 / 0 分不计入排行
+    el.hidden = false;
+    el.className = 'banner__rank is-pending';
+    el.textContent = '今日排名 · 上传中…';
+    Board.submit(score).then(function (r) {
+      if (my !== rankSeq) return;
+      if (lastStats) { lastStats.rank = r.rank; lastStats.rankTotal = r.total; }
+      el.className = 'banner__rank';
+      el.textContent = Board.rankLine(r) + ' ›';
+    }, function () {
+      if (my !== rankSeq) return;
+      el.className = 'banner__rank is-off';
+      el.textContent = '今日排名 · 暂时无法连接';
+    });
+  }
+  function openRank() {
+    Sound.play('open');
+    setOverlay('rank', true);
+    Board.ui.open();
   }
 
   /* 结算 Top3：持有数量（暂存区 + 盘上剩余）最多的三款 */
@@ -952,6 +1374,7 @@
   }
 
   function goHome() {
+    Sound.bgm.duck(false);
     News.stop();
     stopAmbient();
     FX.attach(boardWrap);
@@ -959,8 +1382,10 @@
     setOverlay('share-preview', false);
     showShake(false);
     state = null;
+    replay = null;
+    $('screen-game').classList.remove('is-replay');
     busy = false;
-    showScreen('home');
+    showScreen('room');
   }
 
   /* ---------- 分享 ---------- */
@@ -977,13 +1402,41 @@
   }
 
   /* ---------- 事件绑定 ---------- */
-  $('btn-start').addEventListener('click', openLuckyPicker);
+  function collectCats() {
+    if (Wipe.isActive()) return;
+    Skin.set('cats'); paintMascots(); openLuckyPicker();
+  }
+  function openCollection() {
+    if (Wipe.isActive()) return;
+    Sound.play('open'); showScreen('collection'); $('collection-title').focus();
+  }
+  $('btn-start').addEventListener('click', collectCats);
+  $('btn-collection-play').addEventListener('click', collectCats);
+  $('btn-collection').addEventListener('click', openCollection);
+  $('btn-collection-home').addEventListener('click', function () { Sound.play('close'); showScreen('room'); $('btn-collection').focus(); });
+  $('screen-collection').addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') { event.preventDefault(); $('btn-collection-home').click(); }
+  });
+  $('btn-lucky-close').addEventListener('click', function () {
+    if (Wipe.isActive() || luckySpinning) return;
+    Sound.play('close'); setOverlay('lucky', false); resetLuckyGrid(); goHome(); $('btn-start').focus();
+  });
+  $('btn-result-collection').addEventListener('click', function () {
+    if (Wipe.isActive()) return;
+    goHome(); openCollection();
+  });
+  $('collection-list').addEventListener('click', function (event) {
+    var button = event.target;
+    while (button && button !== this && !button.getAttribute('data-action')) button = button.parentNode;
+    if (!button || button === this || button.disabled || Wipe.isActive()) return;
+    var id = button.getAttribute('data-cat'), action = button.getAttribute('data-action'), p = Collection.progress(id);
+    if (!p || !p.home || (action === 'special' && !p.special)) return;
+    Sound.play('tap'); showScreen('room'); Room.perform(id, action);
+  });
   $('btn-again').addEventListener('click', openLuckyPicker);
   $('btn-lucky-random').addEventListener('click', function () {
-    if (Wipe.isActive()) return;
-    var color = Math.floor(Math.random() * 9);
-    setOverlay('lucky', false);
-    wipeTo(function () { startRun(color); });
+    if (Wipe.isActive() || luckySpinning) return;
+    spinLuckyPick(commitLuckyPick);
   });
   $('btn-home').addEventListener('click', function () {
     if (Wipe.isActive()) return;
@@ -993,13 +1446,13 @@
   });
   $('btn-home-ingame').addEventListener('click', function () {
     if (busy || Wipe.isActive()) return;
-    if (state && !state.ended && state.round > 0) {
+    if (state && !state.ended && state.round > 0 && !replay) { // 回放中途退出不用确认
       if (!confirm('退出当前这局？进度不会保存。')) return;
     }
     wipeTo(goHome);
   });
-  $('btn-deal').addEventListener('click', playRound);
-  $('btn-deal-start').addEventListener('click', playRound);
+  $('btn-deal').addEventListener('click', function () { Sound.play('tap'); playRound(); });
+  $('btn-deal-start').addEventListener('click', function () { Sound.play('tap'); playRound(); });
   $('speed').addEventListener('click', function (e) {
     var t = e.target;
     while (t && t !== this && !(t.getAttribute && t.getAttribute('data-speed') !== null)) t = t.parentNode;
@@ -1008,18 +1461,48 @@
   });
   $('btn-shake').addEventListener('click', shakeBoard);
   $('btn-share').addEventListener('click', shareResult);
-  $('btn-share-close').addEventListener('click', function () { setOverlay('share-preview', false); });
-  $('btn-rules').addEventListener('click', function () { setOverlay('rules', true); });
-  $('btn-rules-close').addEventListener('click', function () { setOverlay('rules', false); });
-  $('btn-skins').addEventListener('click', function () { buildSkinList(); setOverlay('skins', true); });
-  $('btn-skins-close').addEventListener('click', function () { setOverlay('skins', false); });
+  $('btn-replay').addEventListener('click', startReplay);
+  $('btn-share-close').addEventListener('click', function () { Sound.play('close'); setOverlay('share-preview', false); });
+  $('btn-rank').addEventListener('click', openRank);
+  $('result-rank').addEventListener('click', openRank);
+  $('btn-rank-refresh').addEventListener('click', function () { Sound.play('tap'); Board.ui.open(); });
+  $('btn-rank-close').addEventListener('click', function () { Sound.play('close'); setOverlay('rank', false); });
+  $('btn-rank-nick').addEventListener('click', function () { Sound.play('tap'); Board.ui.saveNick(); });
+  $('rank-nick').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); Board.ui.saveNick(); } });
+  $('btn-rules').addEventListener('click', function () { Sound.play('open'); setOverlay('rules', true); });
+  $('btn-rules-close').addEventListener('click', function () { Sound.play('close'); setOverlay('rules', false); });
+  $('btn-skins').addEventListener('click', function () { Sound.play('open'); buildSkinList(); setOverlay('skins', true); });
+  $('btn-skins-close').addEventListener('click', function () { Sound.play('close'); setOverlay('skins', false); });
+  /* 音频开关：各界面的 .audio-btn[data-audio=bgm|sfx] 共用同一状态，点任意一个全部同步刷新 */
+  var audioBtns = document.querySelectorAll('.audio-btn');
+  function renderAudioBtns() {
+    for (var i = 0; i < audioBtns.length; i++) {
+      var b = audioBtns[i];
+      var isBgm = b.getAttribute('data-audio') === 'bgm';
+      var on = isBgm ? Sound.bgm.enabled() : Sound.enabled();
+      b.classList.toggle('is-off', !on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.setAttribute('aria-label', (isBgm ? '音乐：' : '音效：') + (on ? '开' : '关'));
+    }
+  }
+  function onAudioBtn() {
+    var isBgm = this.getAttribute('data-audio') === 'bgm';
+    if (isBgm) { Sound.bgm.toggle(); Sound.play('tap'); }
+    else if (Sound.toggle()) Sound.play('tap');
+    renderAudioBtns();
+  }
+  for (var ab = 0; ab < audioBtns.length; ab++) audioBtns[ab].addEventListener('click', onAudioBtn);
+  renderAudioBtns();
 
   /* ---------- 启动 ---------- */
   renderBest();
   buildBoard();
   paintMascots();
   Skin.preload();
-  showScreen('home');
+  showScreen('room');
+  // 每日排行：代码开关见 leaderboard.js 顶部 ENABLED_DEFAULT（默认关）。开着才露出入口并预取用户身份
+  $('btn-rank').hidden = !Board.enabled;
+  if (Board.enabled) Board.getIdentity(); // 预先取小红书用户身份（拿不到则本地匿名），首次上传不再等探测
 
   // 调试钩子（不影响运行）
   window.TTDDP = {
@@ -1027,6 +1510,14 @@
     config: CONFIG,
     dev: DEV,
     setAutoDeal: setAutoDeal,
+    // 回放：上一局的记录 { seed, lucky, cfg }；replay() 等同结算页「重播本局」
+    getRecord: function () { return lastRecord; },
+    replay: startReplay,
+    // 调试用：改累计猫猫数 / 历史最高（皮肤解锁看历史最高）
+    setCats: function (n) { best.cats = Math.max(0, n | 0); saveBest(best); renderBest(); return best.cats; },
+    setBest: function (n) { best.score = Math.max(0, n | 0); saveBest(best); renderBest(); return best.score; },
+    // 调参用：直接预览解锁进度弹层（旧纪录、新纪录、本局得分）
+    previewUnlock: function (prev, now, run) { showUnlockProgress(prev | 0, now | 0, run | 0, function () {}); },
     // 调试用：立刻按当前状态结束本局并弹结算页
     finish: function () { if (state && !busy) { if (!state.ended) state.ended = 'empty'; finishRun(); } },
     // 调参用：扇形摆出 n 张票并停住（不撕、不发牌）；TTDDP.previewPacks(0) 清掉

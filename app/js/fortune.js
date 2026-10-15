@@ -76,7 +76,7 @@
     for (i = TIERS.length - 1; i >= 0; i--) { if (pct >= TIERS[i].min) { tier = i; break; } }
     return {
       tier: tier, key: TIERS[tier].key, name: TIERS[tier].name,
-      pct: pct, pctText: Math.round(pct * 100) + '%', n: T.n, spent: spent
+      pct: pct, pctText: (pct * 100).toFixed(2) + '%', n: T.n, spent: spent
     };
   }
 

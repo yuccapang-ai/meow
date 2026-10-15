@@ -1,0 +1,146 @@
+{
+  "image": "chef-actions-v1.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "煎鸡蛋",
+  "frames": [
+    {
+      "index": 0,
+      "left": 38,
+      "top": 41,
+      "width": 190,
+      "height": 191
+    },
+    {
+      "index": 1,
+      "left": 38,
+      "top": 44,
+      "width": 189,
+      "height": 188
+    },
+    {
+      "index": 2,
+      "left": 21,
+      "top": 42,
+      "width": 203,
+      "height": 190
+    },
+    {
+      "index": 3,
+      "left": 19,
+      "top": 42,
+      "width": 202,
+      "height": 190
+    },
+    {
+      "index": 4,
+      "left": 37,
+      "top": 40,
+      "width": 193,
+      "height": 192
+    },
+    {
+      "index": 5,
+      "left": 31,
+      "top": 44,
+      "width": 199,
+      "height": 188
+    },
+    {
+      "index": 6,
+      "left": 28,
+      "top": 42,
+      "width": 197,
+      "height": 190
+    },
+    {
+      "index": 7,
+      "left": 23,
+      "top": 46,
+      "width": 199,
+      "height": 186
+    },
+    {
+      "index": 8,
+      "left": 30,
+      "top": 70,
+      "width": 199,
+      "height": 162
+    },
+    {
+      "index": 9,
+      "left": 30,
+      "top": 79,
+      "width": 196,
+      "height": 153
+    },
+    {
+      "index": 10,
+      "left": 27,
+      "top": 96,
+      "width": 188,
+      "height": 136
+    },
+    {
+      "index": 11,
+      "left": 27,
+      "top": 96,
+      "width": 192,
+      "height": 136
+    },
+    {
+      "index": 12,
+      "left": 30,
+      "top": 16,
+      "width": 208,
+      "height": 216
+    },
+    {
+      "index": 13,
+      "left": 32,
+      "top": 21,
+      "width": 201,
+      "height": 211
+    },
+    {
+      "index": 14,
+      "left": 24,
+      "top": 16,
+      "width": 207,
+      "height": 216
+    },
+    {
+      "index": 15,
+      "left": 23,
+      "top": 17,
+      "width": 198,
+      "height": 215
+    }
+  ]
+}

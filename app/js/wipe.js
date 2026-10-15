@@ -96,8 +96,9 @@
   function easeOut(t) { return 1 - (1 - t) * (1 - t); }
   function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  /* opts: { shape, color, mid, done }
-   * color：图标填充色（缺省用 CSS 的 --ember）；mid 在盖满屏幕时调用；done 在整段结束后调用。
+  /* opts: { shape, color, mid, done, onPhase }
+   * color：图标填充色（缺省用 CSS 的 --ember）；mid 在盖满屏幕时调用；done 在整段结束后调用；
+   * onPhase(name) 在进入 fall / land / cover / reveal / done 各阶段时调用一次。
    * 正在转场时再次调用会被忽略并返回 false（防双击）。 */
   function run(opts) {
     opts = opts || {};
@@ -109,19 +110,25 @@
       return true;
     }
     active = true;
-    var W = root.innerWidth, H = root.innerHeight;
+    layer.style.color = opts.color || '';
+    layer.classList.add('is-active');
+    bgEl.classList.add('is-active');
+    // 几何按转场层自身尺寸算：宽屏下游戏被收进居中的竖条（CSS --app-max），转场层与它同宽，不能用 innerWidth
+    var W = layer.clientWidth || root.innerWidth, H = layer.clientHeight || root.innerHeight;
     var s = setShape(opts.shape);
     var cx = W / 2, yLand = H * LAND_Y;
     var coverScale = coverScaleFor(s, cx, yLand);
     var old = document.querySelector('.screen.is-active');
     var useClip = clipOK && !!old;
-
-    layer.style.color = opts.color || '';
-    layer.classList.add('is-active');
-    bgEl.classList.add('is-active');
     shapeEl.style.transition = 'none';
 
-    var t0 = null, midDone = false, finished = false, guard;
+    var t0 = null, midDone = false, finished = false, guard, phase = '';
+    /* 阶段切换回调（音效层订阅）：fall / land / cover / reveal / done */
+    function enter(name) {
+      if (phase === name) return;
+      phase = name;
+      if (opts.onPhase) { try { opts.onPhase(name); } catch (err) { /* 回调出错不影响转场 */ } }
+    }
 
     function applyOld(apexY, wTop, flat, progress) {
       if (!old) return;
@@ -151,6 +158,7 @@
       bgEl.classList.remove('is-active');
       shapeEl.style.transform = 'scale(0.01)';
       active = false;
+      enter('done');
       if (opts.done) opts.done();
     }
     function place(ty, rot, sx, sy) {
@@ -162,17 +170,20 @@
       if (t0 === null) t0 = now;
       var e = now - t0, t, sc;
       if (e < T_LAND) {
+        enter('fall');
         t = e / FALL_MS;
         var ty = START_Y + (yLand - START_Y) * t * t;          // 重力加速
         place(ty, -12 * (1 - t), ICON_SCALE, ICON_SCALE);
         applyOld(ty - 10, cx * Math.pow(t, 1.3), 0, t);
       } else if (e < T_COVER) {
+        enter('land');
         t = (e - T_LAND) / LAND_MS;
         var k = Math.sin(Math.PI * t);                          // 挤压 → 回弹
         var sx = ICON_SCALE * (1 + 0.16 * k), sy = ICON_SCALE * (1 - 0.22 * k);
         place(yLand + 44 * (ICON_SCALE - sy), 0, sx, sy);       // 底边不动
         applyOld(yLand - 10, cx, easeOut(t), 1);
       } else if (e < T_HOLD) {
+        enter('cover');
         t = (e - T_COVER) / COVER_MS;
         hideOld();
         sc = ICON_SCALE + (coverScale - ICON_SCALE) * t * t * t; // 越来越快地撑满
@@ -182,6 +193,7 @@
         doMid();
       } else if (e < T_END) {
         doMid();                                                // 卡顿跳过了 HOLD 段时在这里补切屏
+        enter('reveal');
         t = (e - T_REVEAL) / REVEAL_MS;
         sc = Math.max(0.01, coverScale * (1 - easeInOut(t)));
         place(yLand, 0, sc, sc);

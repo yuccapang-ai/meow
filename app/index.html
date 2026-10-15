@@ -26,6 +26,7 @@
     .screen.is-active { display: flex; }
   </style>
   <link rel="stylesheet" href="./css/game.css" />
+  <link rel="stylesheet" href="./css/room.css?v=catnip-1" />
 </head>
 <body>
 
@@ -80,67 +81,141 @@
   <!-- 转场时旧界面裂开后露出的墨黑底（wipe.js 控制） -->
   <div class="wipe-bg" id="wipe-bg"></div>
 
-  <!-- 开始界面 -->
-  <section id="screen-home" class="screen is-active">
-    <div class="home">
-      <header class="home__head">
-        <h1 class="home__title">猫猫对对碰</h1>
-        <p class="home__tag"><span class="home__tag-dot"></span><span class="home__tag-text">PAIR &amp; MATCH</span><span class="home__tag-dot"></span></p>
-      </header>
-
-      <div class="home__main">
-        <div class="home__hero-slot slot slot--lg" data-icon="start"></div>
-        <button class="hero-btn" id="btn-start" type="button">
-          <span class="hero-btn__main">开始游戏</span>
-          <span class="hero-btn__sub">Open a pack, match a pair!</span>
-        </button>
-        <p class="home__record">最高纪录 <b id="best-score">0</b> 只</p>
+  <!-- 房间即首页：长场景和猫咪共用世界坐标，滑动只移动镜头。 -->
+  <section id="screen-room" class="screen room is-active" aria-labelledby="room-title">
+    <div class="room__viewport" id="room-viewport" tabindex="0" role="region" aria-label="房间全景，左右滑动或使用方向键浏览" aria-describedby="room-hint">
+      <div class="room__world" id="room-world">
+        <img class="room__background" id="room-background" data-src="./assets/room/room-panorama-day-v2.png" width="2103" height="748" alt="米色与鼠尾草绿的温暖猫咪房间，五个区域由连续木地板相连" draggable="false" />
       </div>
-
-      <nav class="home__nav">
-        <div class="home__nav-row">
-          <button class="tlink tlink--muted" id="btn-rank" type="button" disabled>排行榜</button>
-          <button class="tlink tlink--muted" id="btn-slot-a" type="button" disabled>占位</button>
-          <button class="tlink tlink--muted" id="btn-slot-b" type="button" disabled>占位</button>
-        </div>
-        <div class="home__nav-row">
-          <button class="tlink" id="btn-skins" type="button">皮肤</button>
-          <button class="tlink" id="btn-rules" type="button">玩法说明</button>
-        </div>
-      </nav>
-
-      <footer class="home__foot">
-        <div class="checker"></div>
-      </footer>
     </div>
+    <header class="room__header">
+      <div class="room__topline">
+        <div class="room__heading"><h1 id="room-title">猫咪房间</h1><p id="room-cat-status">甜甜圈猫的新家</p></div>
+        <div class="audio-ctl room__audio">
+          <button class="audio-btn" type="button" data-audio="bgm" aria-label="音乐" aria-pressed="true">
+            <svg class="audio-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path class="audio-btn__fill" d="M9 18V5l12-2v14"/><circle class="audio-btn__fill" cx="6" cy="18" r="3"/><circle class="audio-btn__fill" cx="18" cy="17" r="3"/><line class="audio-btn__slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+          </button>
+          <button class="audio-btn" type="button" data-audio="sfx" aria-label="音效" aria-pressed="true">
+            <svg class="audio-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path class="audio-btn__fill" d="M4 9.5v5h3.5l5 4v-13l-5 4H4z"/><path class="audio-btn__wave" d="M16 9a4.5 4.5 0 0 1 0 6"/><path class="audio-btn__wave" d="M18.8 6.2a8.5 8.5 0 0 1 0 11.6"/><line class="audio-btn__slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="room__toolbar">
+        <nav class="room__tools" aria-label="游戏菜单">
+          <button class="room__tool" id="btn-rank" type="button" hidden>今日排行</button>
+          <button class="room__tool" id="btn-skins" type="button">皮肤</button>
+          <button class="room__tool" id="btn-rules" type="button">玩法说明</button>
+        </nav>
+        <p class="room__catnip" aria-label="猫薄荷余额"><span aria-hidden="true">🌿</span> <b id="room-catnip">0</b></p>
+        <p class="room__record">最高 <b id="best-score">0</b> · 累计 <b id="best-cats">0</b> 只</p>
+      </div>
+      <button class="room__collection" id="btn-collection" type="button"><span>猫咪收集 <b id="room-collection-count">1 / 9</b></span><span>查看解锁进度 →</span></button>
+      <div class="room__life-tools">
+        <button class="room__life-entry" id="btn-room-life" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="room-life-panel"><span>猫咪状态</span><span id="room-life-count">1 在家 · 0 旅游</span><span aria-hidden="true">→</span></button>
+        <button class="room__arrange-button" id="btn-room-arrange" type="button" aria-pressed="false" aria-controls="room-arrange-bar" disabled>布置家具</button>
+      </div>
+      <div class="room__arrange-bar" id="room-arrange-bar" hidden>
+        <p id="room-arrange-status" role="status">拖动家具摆放 · 靠近边缘移动视角</p>
+        <button id="btn-room-arrange-reset" type="button">恢复默认</button>
+      </div>
+    </header>
+    <div class="room-life" id="room-life-panel" hidden>
+      <section class="room-life__sheet" role="dialog" aria-modal="true" aria-labelledby="room-life-title" aria-describedby="room-life-rule">
+        <header class="room-life__header"><div><p class="room-life__eyebrow">HOME &amp; LITTLE ADVENTURES</p><h2 id="room-life-title">猫猫都去哪儿了？</h2></div><button class="room-life__close" id="btn-room-life-close" type="button" aria-label="关闭猫咪状态">×</button></header>
+        <div class="room-life__scroll">
+          <p class="room-life__summary" id="room-life-summary"></p>
+          <p class="room-life__note" id="room-life-rule"></p>
+          <ul class="room-life__list" id="room-life-list"></ul>
+          <div class="room-life__section-title"><h3>旅行带回的小家具</h3><span id="room-life-gift-count">0 / 5 款</span></div>
+          <p class="room-life__note">每次回家带回 1–2 件，同款合并收藏。回到房间点「布置家具」可自由拖动，位置自动保存。猫咪靠近空闲猫爬架就会跳上去玩。</p>
+          <ul class="room-life__furniture" id="room-life-furniture"></ul>
+          <h3 class="room-life__journal-title">猫猫旅行手记</h3><ul class="room-life__journal" id="room-life-journal" aria-live="polite"></ul>
+        </div>
+      </section>
+    </div>
+    <div class="room__loading" id="room-loading" role="status">
+      <span id="room-loading-text">正在打开房间…</span>
+      <button class="room__retry" id="btn-room-retry" type="button" hidden>重新加载</button>
+    </div>
+    <footer class="room__footer">
+      <div class="room__hint-row">
+        <span class="room__counter" id="room-counter" aria-label="第 1 区，共 5 区">01 / 05</span>
+        <p class="room__hint" id="room-hint"><span aria-hidden="true">↔</span> 左右滑动逛房间</p>
+        <button class="room__find-cat" id="btn-room-find-cat" type="button" disabled>找猫咪</button>
+      </div>
+      <nav class="room__zones" aria-label="房间区域">
+        <button class="room__zone is-active" type="button" data-room-zone="0" aria-pressed="true"><span>01</span>起居区</button>
+        <button class="room__zone" type="button" data-room-zone="1" aria-pressed="false"><span>02</span>用餐区</button>
+        <button class="room__zone" type="button" data-room-zone="2" aria-pressed="false"><span>03</span>玩耍区</button>
+        <button class="room__zone" type="button" data-room-zone="3" aria-pressed="false"><span>04</span>休息区</button>
+        <button class="room__zone" type="button" data-room-zone="4" aria-pressed="false"><span>05</span>阳光区</button>
+      </nav>
+      <button class="room__play" id="btn-start" type="button">
+        <span class="room__play-copy"><strong>去养猫</strong><span>玩对对碰，收集猫咪</span></span>
+        <span class="room__play-arrow" aria-hidden="true">→</span>
+      </button>
+    </footer>
+  </section>
+
+  <section id="screen-collection" class="screen collection" aria-labelledby="collection-title">
+    <header class="collection__header">
+      <button class="room__tool" id="btn-collection-home" type="button">‹ 房间</button>
+      <h1 id="collection-title" tabindex="-1">猫咪收集</h1>
+      <span class="collection__edition">摸鱼猫 · 01</span>
+    </header>
+    <div class="collection__scroll" id="collection-scroll">
+      <div class="collection__intro">
+        <p class="collection__eyebrow">一点点收集，把家住满</p>
+        <p class="collection__summary" id="collection-summary">1 / 9 只已入住</p>
+        <div class="collection__milestones"><span><b>30</b> 只 · 猫咪入住</span><span><b>50</b> 只 · 专属动作</span></div>
+        <p class="collection__note">每种猫分别累计，完成对对碰后入账。甜甜圈猫默认入住，散步和睡觉已解锁。</p>
+      </div>
+      <p class="collection__notice" id="collection-notice" role="status" hidden></p>
+      <div class="collection__list" id="collection-list"></div>
+      <p class="collection__note collection__footnote">收集「摸鱼猫」套系中的对应猫咪来推进解锁；重播不重复计数。</p>
+    </div>
+    <footer class="collection__footer"><button class="room__play" id="btn-collection-play" type="button"><span class="room__play-copy"><strong>去收集猫咪</strong><span>进入摸鱼猫对对碰</span></span><span class="room__play-arrow" aria-hidden="true">→</span></button></footer>
   </section>
 
   <!-- 游戏界面 -->
   <section id="screen-game" class="screen">
-    <header class="hud">
-      <button class="hud__back" id="btn-home-ingame" type="button" aria-label="返回主页">
-        <span class="hud__back-icon">‹</span>
-      </button>
-      <div class="hud__stat">
-        <span class="hud__label">暂存</span><span class="hud__num" id="hud-stash">0</span><span class="hud__label">只</span>
-      </div>
-      <div class="hud__stat hud__stat--packs" id="hud-packs-wrap">
-        <span class="hud__pack-icon"></span>
-        <span class="hud__num hud__num--big" id="hud-packs">0</span>
-        <span class="hud__label">卡包</span>
-      </div>
-      <div class="hud__stat">
-        <span class="hud__label">已赚</span><span class="hud__num" id="hud-earned">0</span>
-      </div>
+    <!-- 顶部统计：一道下垂的圆弧切成三段——小黑（暂存）/ 大红（卡包）/ 小黑（已赚）。
+         弧心在屏幕上方，中间最低、两端翘起，正好从水滴屏刘海底下绕过去；两端也不碰容器角上的按钮。
+         三段是同一个圆（R=431.4，圆心 (187.5,-337.4)）的三截粗描边，文字沿切线微旋 ±14°。
+         元素 id 保持不变供 JS 更新；#hud-packs-wrap 的 is-bump / is-drop 动画作用在 <g> 上 -->
+    <header class="stats">
+      <svg class="arc" viewBox="0 0 375 125" aria-label="统计">
+        <path class="arc__seg arc__seg--side" d="M57 73.8 A431.4 431.4 0 0 0 105 86"/>
+        <path class="arc__seg arc__seg--side" d="M270 86 A431.4 431.4 0 0 0 318 73.8"/>
+        <g id="hud-packs-wrap">
+          <path class="arc__shadow" d="M151 92.5 A431.4 431.4 0 0 0 224 92.5"/>
+          <path class="arc__glow" d="M151 92.5 A431.4 431.4 0 0 0 224 92.5"/>
+          <path class="arc__seg arc__seg--main" d="M151 92.5 A431.4 431.4 0 0 0 224 92.5"/>
+          <text class="arc__text" x="187.5" y="94" dy="0.36em"><tspan class="arc__num arc__num--big" id="hud-packs">0</tspan><tspan class="arc__label" dx="3">卡包</tspan></text>
+        </g>
+        <text class="arc__text" x="81" y="80.6" dy="0.36em" transform="rotate(14.3 81 80.6)"><tspan class="arc__label">暂存</tspan><tspan class="arc__num" id="hud-stash" dx="3">0</tspan><tspan class="arc__label" dx="2">只</tspan></text>
+        <text class="arc__text" x="294" y="80.6" dy="0.36em" transform="rotate(-14.3 294 80.6)"><tspan class="arc__label">已赚</tspan><tspan class="arc__num" id="hud-earned" dx="3">0</tspan></text>
+      </svg>
     </header>
 
-    <div class="ticker" id="ticker"><span class="ticker__tag"><span class="ticker__live"></span>快讯</span><div class="ticker__viewport" id="ticker-viewport"><div class="ticker__track" id="ticker-text"></div></div></div>
+    <!-- 快讯条 + 静音开关同一行：快讯占满剩余宽度，两个开关贴右 -->
+    <div class="ticker-row">
+      <div class="ticker" id="ticker"><span class="ticker__tag"><span class="ticker__live"></span>快讯</span><div class="ticker__viewport" id="ticker-viewport"><div class="ticker__track" id="ticker-text"></div></div></div>
+      <div class="audio-ctl ticker-row__audio">
+        <button class="audio-btn" type="button" data-audio="bgm" aria-label="音乐" aria-pressed="true">
+          <svg class="audio-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path class="audio-btn__fill" d="M9 18V5l12-2v14"/><circle class="audio-btn__fill" cx="6" cy="18" r="3"/><circle class="audio-btn__fill" cx="18" cy="17" r="3"/><line class="audio-btn__slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+        </button>
+        <button class="audio-btn" type="button" data-audio="sfx" aria-label="音效" aria-pressed="true">
+          <svg class="audio-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path class="audio-btn__fill" d="M4 9.5v5h3.5l5 4v-13l-5 4H4z"/><path class="audio-btn__wave" d="M16 9a4.5 4.5 0 0 1 0 6"/><path class="audio-btn__wave" d="M18.8 6.2a8.5 8.5 0 0 1 0 11.6"/><line class="audio-btn__slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+        </button>
+      </div>
+    </div>
 
     <main class="stage">
       <div class="lucky-pill" id="lucky-pill">
         <span class="lucky-pill__label">幸运款</span>
         <div class="lucky-pill__sprite" id="lucky-pill-sprite"></div>
-        <span class="lucky-pill__note" id="lucky-pill-note">消除时每只 +1</span>
+        <span class="lucky-pill__note" id="lucky-pill-note">抽到时每只 +1</span>
       </div>
       <div class="board-wrap">
         <div class="board" id="board"></div>
@@ -168,16 +243,24 @@
     </main>
 
     <footer class="dock">
-      <button class="btn btn--primary btn--deal" id="btn-deal" type="button">
-        <span class="btn__main">发牌</span>
-        <span class="btn__sub" id="deal-cost">用 9 个卡包填满</span>
-      </button>
-      <!-- 自动发牌模式：底栏放倍速控件（暂停 / 1× / 2× / 4×），影响全局动画速度 -->
-      <div class="speed" id="speed" role="group" aria-label="倍速">
-        <button class="speed__btn speed__btn--pause" data-speed="0" type="button" aria-label="暂停"><span class="speed__bars"></span></button>
-        <button class="speed__btn is-active" data-speed="1" type="button">1×</button>
-        <button class="speed__btn" data-speed="2" type="button">2×</button>
-        <button class="speed__btn" data-speed="4" type="button">4×</button>
+      <div class="dock__row">
+        <!-- 返回房间：底栏左下角 -->
+        <button class="dock__back" id="btn-home-ingame" type="button" aria-label="返回房间" title="返回房间">
+          <span class="dock__back-icon">‹</span>
+        </button>
+        <button class="btn btn--primary btn--deal" id="btn-deal" type="button">
+          <span class="btn__main">发牌</span>
+          <span class="btn__sub" id="deal-cost">用 9 个卡包填满</span>
+        </button>
+        <!-- 回放模式：倍速控件左侧亮「回放中」标签 -->
+        <span class="replay-tag" id="replay-tag" role="status"><span class="replay-tag__dot"></span>回放中</span>
+        <!-- 自动发牌模式：底栏放倍速控件（暂停 / 1× / 2× / 4×），影响全局动画速度 -->
+        <div class="speed" id="speed" role="group" aria-label="倍速">
+          <button class="speed__btn speed__btn--pause" data-speed="0" type="button" aria-label="暂停"><span class="speed__bars"></span></button>
+          <button class="speed__btn is-active" data-speed="1" type="button">1×</button>
+          <button class="speed__btn" data-speed="2" type="button">2×</button>
+          <button class="speed__btn" data-speed="4" type="button">4×</button>
+        </div>
       </div>
       <div class="checker checker--sm"></div>
     </footer>
@@ -187,6 +270,14 @@
 <!-- 结果横幅 -->
 <div class="overlay" id="result">
   <div class="banner">
+    <div class="audio-ctl banner__audio">
+      <button class="audio-btn" type="button" data-audio="bgm" aria-label="音乐" aria-pressed="true">
+        <svg class="audio-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path class="audio-btn__fill" d="M9 18V5l12-2v14"/><circle class="audio-btn__fill" cx="6" cy="18" r="3"/><circle class="audio-btn__fill" cx="18" cy="17" r="3"/><line class="audio-btn__slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+      </button>
+      <button class="audio-btn" type="button" data-audio="sfx" aria-label="音效" aria-pressed="true">
+        <svg class="audio-btn__icon" viewBox="0 0 24 24" aria-hidden="true"><path class="audio-btn__fill" d="M4 9.5v5h3.5l5 4v-13l-5 4H4z"/><path class="audio-btn__wave" d="M16 9a4.5 4.5 0 0 1 0 6"/><path class="audio-btn__wave" d="M18.8 6.2a8.5 8.5 0 0 1 0 11.6"/><line class="audio-btn__slash" x1="3.5" y1="3.5" x2="20.5" y2="20.5"/></svg>
+      </button>
+    </div>
     <!-- 1 标题 -->
     <div class="banner__ribbon" id="result-title">RUN 结束</div>
     <!-- 2 运势 -->
@@ -197,6 +288,7 @@
       <span class="banner__hero-label">只</span>
     </div>
     <p class="banner__pct" id="result-reason"></p>
+    <button class="banner__rank is-pending" id="result-rank" type="button" hidden></button>
     <!-- 4 签文 -->
     <p class="banner__oracle" id="fortune-line"></p>
     <!-- 5 领奖台 -->
@@ -213,8 +305,17 @@
     <!-- 8 按钮 -->
     <div class="banner__actions">
       <button class="btn btn--primary" id="btn-again" type="button">再来一局</button>
-      <button class="btn btn--secondary" id="btn-share" type="button">保存战绩图</button>
-      <button class="btn btn--ghost" id="btn-home" type="button">返回主页</button>
+      <!-- 皮肤解锁小进度条：全部解锁后隐藏 -->
+      <div class="banner__unlock" id="result-unlock" hidden>
+        <div class="pbar pbar--mini"><div class="pbar__fill" id="result-unlock-fill"></div></div>
+        <span class="banner__unlock-text" id="result-unlock-text"></span>
+      </div>
+      <div class="banner__row">
+        <button class="btn btn--secondary" id="btn-replay" type="button">重播本局</button>
+        <button class="btn btn--secondary" id="btn-share" type="button">保存战绩图</button>
+      </div>
+      <button class="result-collection" id="btn-result-collection" type="button"><span id="result-collection-text">查看猫咪收集进度</span><span aria-hidden="true"> →</span></button>
+      <button class="btn btn--ghost" id="btn-home" type="button">返回房间</button>
     </div>
     <!-- 仅供脚本写入、不展示的旧字段 -->
     <span hidden id="result-tagline"></span>
@@ -225,14 +326,47 @@
   </div>
 </div>
 
+<!-- 皮肤解锁进度（结算前先弹；与结算横幅同规格；点任意位置 / 「查看结算」/ 数秒后进入结算） -->
+<div class="overlay" id="unlock">
+  <div class="banner banner--unlock" id="unlock-sheet">
+    <div class="unlock__flash"></div>
+    <div class="banner__ribbon" id="unlock-ribbon">皮肤解锁进度</div>
+    <p class="banner__tagline" id="unlock-tagline">NEXT SKIN SET</p>
+    <div class="unlock__name"><span id="unlock-name"></span><span class="unlock__name-tag" id="unlock-tag">即将解锁</span></div>
+    <!-- 目标套系剪影：与首页同款 Q 弹轮播；解锁瞬间白闪 + 光晕，彩色猫猫重新落下 -->
+    <div class="home__hero unlock__hero-box is-silhouette" id="unlock-hero" aria-hidden="true"><span class="unlock__glow"></span><span class="home__hero-shadow"></span><div class="home__hero-cat"><div class="home__hero-cat-body"></div></div></div>
+    <p class="unlock__caption">单局历史最高</p>
+    <div class="banner__hero unlock__hero">
+      <span class="banner__hero-num" id="unlock-num">0</span>
+      <span class="banner__hero-label" id="unlock-need">/ 0 只</span>
+    </div>
+    <!-- 深色 = 历史最高，浅色 = 本局得分 -->
+    <div class="pbar pbar--big" id="unlock-bar"><div class="pbar__ghost" id="unlock-ghost"></div><div class="pbar__fill" id="unlock-fill"></div><span class="pbar__text" id="unlock-count"></span></div>
+    <p class="unlock__hint" id="unlock-hint"></p>
+    <div class="banner__actions">
+      <button class="btn btn--primary" id="btn-unlock-continue" type="button">查看结算</button>
+    </div>
+    <p class="unlock__tap" id="unlock-tap">点击任意位置继续</p>
+  </div>
+</div>
+
 <!-- 开局选幸运款 -->
 <div class="overlay" id="lucky">
+  <button class="lucky-skin-arrow lucky-skin-arrow--prev" id="lucky-skin-prev" type="button" aria-label="上一套系">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 L7 12 L15 20" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
   <div class="sheet">
+    <button class="room__tool lucky-room-back" id="btn-lucky-close" type="button">‹ 返回房间</button>
     <h2 class="sheet__title" id="lucky-title">选一只幸运伙伴</h2>
-    <p class="sheet__sub">这局里每消除一只幸运款，额外 +1 卡包</p>
+    <div class="lucky-skin-switch" id="lucky-skin-switch">
+      <span class="lucky-skin-switch__name" id="lucky-skin-name"></span>
+    </div>
     <div class="lucky-grid" id="lucky-grid"></div>
     <button class="btn btn--ghost" id="btn-lucky-random" type="button">随便来一只</button>
   </div>
+  <button class="lucky-skin-arrow lucky-skin-arrow--next" id="lucky-skin-next" type="button" aria-label="下一套系">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 L17 12 L9 20" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
 </div>
 
 <!-- 皮肤套系 -->
@@ -244,13 +378,31 @@
   </div>
 </div>
 
+<!-- 今日排行（每日 00:00 北京时间刷新；数据来自 BigLei3 服务器，见 docs/leaderboard.md） -->
+<div class="overlay overlay--top" id="rank">
+  <div class="sheet sheet--rank">
+    <h2 class="sheet__title">今日排行</h2>
+    <p class="rank-status" id="rank-status">加载中…</p>
+    <ol class="rank-list" id="rank-list" hidden></ol>
+    <p class="rank-me" id="rank-me" hidden></p>
+    <div class="rank-nick" id="rank-nick-wrap" hidden>
+      <input class="rank-nick__input" id="rank-nick" type="text" maxlength="24" placeholder="昵称" autocomplete="off" />
+      <button class="btn btn--secondary" id="btn-rank-nick" type="button">保存</button>
+    </div>
+    <div class="rank-actions">
+      <button class="btn btn--ghost" id="btn-rank-refresh" type="button">刷新</button>
+      <button class="btn btn--primary" id="btn-rank-close" type="button">关闭</button>
+    </div>
+  </div>
+</div>
+
 <!-- 玩法说明 -->
 <div class="overlay" id="rules">
   <div class="sheet">
     <h2 class="sheet__title">玩法说明</h2>
     <ul class="sheet__list">
       <li>每个卡包开出一只随机款式，共 9 款。</li>
-      <li>开局先选一只<b>幸运款</b>：每消除一只幸运款，额外 +1 卡包。</li>
+      <li>开局先选一只<b>幸运款</b>：每抽到一只幸运款，立刻 +1 卡包，之后消不消都不影响。</li>
       <li>点击「发牌」，用卡包填满九宫格里的空位。</li>
       <li><b>对子碰</b>：盘上同时有两只同款（不需要相邻），消除，+1 卡包。</li>
       <li><b>连线碰</b>：三只同款连成一线，消除，+5 卡包。</li>
@@ -284,8 +436,20 @@
 <script src="./js/fx.js"></script>
 <script src="./js/share.js"></script>
 <script src="./js/wipe.js"></script>
+<script src="./js/audio-data.js"></script>
+<script src="./js/sound.js"></script>
 <script src="./js/fortune-data.js"></script>
 <script src="./js/fortune.js"></script>
-<script src="./js/app.js"></script>
+<script src="./js/leaderboard.js"></script>
+<script src="./js/cat-collection.js?v=pages-2"></script>
+<script src="./js/cat-actions.js?v=travel-1"></script>
+<script src="./js/cat-travel.js?v=catnip-1"></script>
+<script src="./js/room-furniture.js?v=arrange-1"></script>
+<script src="./js/room-residents.js?v=arrange-1"></script>
+<script src="./js/room-life.js?v=arrange-1"></script>
+<script src="./js/room-arrange.js?v=arrange-1"></script>
+<script src="./js/room.js?v=catnip-1"></script>
+<script src="./js/collection-view.js?v=travel-1"></script>
+<script src="./js/app.js?v=collection-1"></script>
 </body>
 </html>

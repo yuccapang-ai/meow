@@ -1,0 +1,37 @@
+Generation mode: built-in image_gen
+Source character: myasset/cat2nd_5.png
+Both returned sheets already have RGBA transparency; no chroma-key removal was required.
+Runtime atlas: app/assets/room/cat/cool-cat-actions-v1.webp
+Packing: tools/build-room-cat.cjs aligns generated poses to transparent 256px cells; it does not synthesize poses.
+
+WALK SHEET PROMPT
+
+Use case: identity-preserve / animation sprite sheet.
+Edit the provided gray-and-white cartoon sunglasses cat into a production-ready WALK CYCLE SPRITE SHEET. Preserve its identity: big rounded cat head, triangular ears with warm pink interiors, chunky black sunglasses, white face muzzle belly and paws, warm gray-brown tabby patches and stripes, thick dark cocoa irregular outlines, restrained watercolor paper texture. Remove the floating golden sparkle and baked ground shadow. This is the SAME collectible cat, in new animated poses.
+Output ONE wide image, exact 2:1 aspect ratio, ideally 2048 x 1024, containing EXACTLY EIGHT frames arranged in a precise FOUR COLUMN by TWO ROW grid. Every cell is square and the same size. No visible grid or captions. Read frames left-to-right, top-to-bottom.
+Every frame is a full-body right-facing three-quarter SIDE VIEW of the cat walking on FOUR PAWS, with the head slightly turned toward the viewer so its sunglasses remain visible. Short cute legs, compact body, big head, curved striped tail raised behind. Do not draw a humanoid biped. All frames face RIGHT, nose to the RIGHT, tail to the LEFT.
+The eight frames must form a coherent cyclic WALK animation with clear anatomically different LEG AND PAW POSES, not copies of one static pose:
+1 contact: near front paw reaches forward, near hind paw extends back, far pair opposite.
+2 down: front paw supports weight, opposite hind paw begins lifting.
+3 passing: near front leg under the body, near hind paw swings forward, far front extends back.
+4 up: near front paw lifts and folds, near hind paw reaches its forward contact.
+5 opposite contact: near front paw behind, near hind paw forward, far pair opposite frame 1.
+6 opposite down: opposite support phase, visible bent knees.
+7 opposite passing: near front paw swings forward, near hind leg passes under belly.
+8 opposite up: near front paw reaches forward again, preparing the seamless return to frame 1.
+The torso and head keep consistent size, angle, markings and placement across all eight frames. Change the leg silhouettes and paw contact points clearly; keep head-height movement minimal. Tail moves only subtly. A proper walk cycle, not a running bounce.
+Alignment is crucial: identical scale in every cell, same body center at 50% of cell width, ground contact at 84% of cell height, entire character including tail inside 12%-88% of cell width and 18%-84% of cell height. Generous uniform padding, no parts cross cell boundaries. Each cell must contain precisely ONE cat.
+Use one perfectly flat solid #00ff00 chroma-key background across the entire sheet, for later background removal. No gradient, paper texture or light variation in the green background. Do not use green anywhere in the cat. Crisp antialiased character edges. No floor, no cast shadow, no contact shadow, no scenery, no sparkles, no trails, no motion lines, no text, no numerals, no labels, no watermark. Only the eight differently posed cats on the uniform green background.
+
+REST ACTION SHEET PROMPT
+
+Use case: identity-preserve / animation sprite sheet.
+Create a coordinated ACTION sprite sheet for the SAME gray-and-white sunglasses cat in the two references. Image 1 is its original identity; image 2 is its approved four-pawed walking animation. Match the approved walking cat especially: chunky black sunglasses, large friendly rounded head, warm gray-brown tabby cap/back/tail patches, white muzzle/chest/belly/paws, thick cocoa hand-drawn outlines and delicate watercolor fill. Do not include the floating sparkle or any baked shadow.
+Output ONE SQUARE sheet, ideally 2048 x 2048 pixels. EXACT FOUR COLUMNS by FOUR ROWS, SIXTEEN equal square cells. Invisible grid, no dividers, labels or text. ONE complete cat in every cell, generous consistent padding, no frame crosses a cell boundary. Keep its head size and body size consistent throughout the entire sheet; lower poses should occupy less vertical height rather than zooming larger. Ground/paw baseline is 84% down each cell, body center 50% across. Whole cat, tail and extended paws must stay inside the central 80% of each cell.
+All poses face RIGHT in a three-quarter side view, muzzle toward the right, with enough front face visible to see the sunglasses. Every ROW is a consecutive sequence of FOUR KEYFRAMES for a different cat action. Precise row assignment:
+ROW 1, SITTING DOWN: frame 1 four-pawed neutral stand matching the walking cat; frame 2 hind legs bend and rump lowers halfway, front paws planted; frame 3 settles on haunches with straight front paws and tail curling alongside; frame 4 comfortable seated pose with head tilting very slightly. This must depict sitting down, not four static copies. Hindquarters visibly fold.
+ROW 2, GROOMING / LICKING A PAW: cat remains seated. Frame 1 lifts its NEAR front paw to chin height; frame 2 bends head toward that paw and extends a small pink tongue to lick it; frame 3 raises the same paw to rub its cheek below the sunglasses; frame 4 lowers paw slightly and lifts head. Keep far front paw on the floor and rump stationary. Clearly draw the changing foreleg and tongue positions. No detached paws, no extra limbs.
+ROW 3, STRETCH / PLAY BOW: frame 1 quadruped neutral stand; frame 2 steps both front paws forward and lowers chest, hind legs stay planted; frame 3 full cat stretch with chest close to the floor, front legs stretched long forward, rump high and tail curving up; frame 4 begins rising from the stretch by bending the elbows and lifting the head/chest. Clear change of spine and limb pose, not a rotated sticker.
+ROW 4, CURLING UP / SLEEP: frame 1 crouches into a loaf with front paws tucked; frame 2 lowers head toward forepaws and curls tail around body; frame 3 fully asleep in a compact curled resting pose, sunglasses stay on, nose nestled toward paws; frame 4 same curled sleeping pose with a very subtle drawn breathing change of the belly, all contact points unchanged. No Z symbols, speech bubbles or icons.
+These are game animation frames, not character illustrations at random scales. Preserve markings, glasses, proportions and line weight across all cells. Cats are small cute quadrupeds; do not turn them into human-shaped mascots.
+Background: perfectly flat uniform solid #00ff00 chroma key, with no texture, gradients, shadows, reflections or floor. Green only in the background, never in the cat. Crisp antialiased artwork, opaque flat-color cat fills. No text, numbers, captions, labels, grid lines, shadows, scenery, stars, sparkle, motion lines, watermark or logo.

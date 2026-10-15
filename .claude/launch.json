@@ -4,8 +4,26 @@
     {
       "name": "ttddp",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "app"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "app"
+      ],
       "port": 8765
+    },
+    {
+      "name": "ttddp-dev2",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8767",
+        "--directory",
+        "app"
+      ],
+      "port": 8767
     }
   ]
 }

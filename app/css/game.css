@@ -19,7 +19,22 @@
   --c5: #4dabf7; --c6: #748ffc; --c7: #da77f2; --c8: #f783ac;
 }
 
-body { background: var(--paper); color: var(--ink); }
+/* ---------- 宽屏适配 ----------
+ * 游戏按手机竖屏设计。宽高比在 9:16 以内照常全宽自适应；比 9:16 更宽（平板 / 桌面浏览器 / 横屏）时，
+ * 整个游戏收进一个居中、宽 = 高 × 9/16 的竖条里，两侧露出底板。
+ * 底板：苔绿纯色（--moss，与格纹 / 棋盘边框同一色系）+ 墨色低透明度的坐姿猫猫剪影半错位平铺（160px 一格两只，一正一反微倾），
+ * 像一张海报贴在绿色壁纸上；游戏框外沿一道墨色描边 + 柔影把它托起来。手机上框宽 = 屏宽，底板与描边都在屏外看不到。
+ * 弹层与转场层是 fixed 定位，也用同一套 left/right 0 + max-width + margin auto 收进框内；
+ * 转场的几何（wipe.js）按转场层自身宽高计算而不是 innerWidth。--app-height 由 app.js 按 innerHeight 维护。 */
+:root { --app-max: calc(var(--app-height, 100vh) * 0.5625); --board: var(--moss); }
+body {
+  color: var(--ink);
+  background-color: var(--board);
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><defs><g id='c' fill='%232e2d28' stroke='%232e2d28'><circle cx='50' cy='32' r='18'/><path d='M37 20 L30 2 L48 13 Z M63 20 L70 2 L52 13 Z'/><path d='M35 44 C24 60 22 78 26 90 L74 90 C78 78 76 60 65 44 Z'/><path d='M72 87 C90 89 97 76 89 64' fill='none' stroke-width='7' stroke-linecap='round'/></g></defs><g opacity='0.16'><use href='%23c' transform='translate(12 14) rotate(-6 30 34) scale(0.6)'/><use href='%23c' transform='translate(152 94) rotate(6 -30 34) scale(-0.6 0.6)'/></g></svg>");
+  background-size: 160px 160px;
+  background-position: center top;
+}
+#app { max-width: var(--app-max); margin: 0 auto; background: var(--paper); box-shadow: 0 0 0 3px var(--ink), 0 12px 40px rgba(46, 45, 40, 0.45); }
 
 .turtle { display: block; width: 100%; height: 100%; }
 
@@ -95,25 +110,151 @@ body { background: var(--paper); color: var(--ink); }
   background: var(--paper);
   color: var(--moss);
 }
-.home__head { text-align: center; margin-bottom: 14px; flex-shrink: 0; }
-.home__title {
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  line-height: 1.1;
-  color: var(--sage-deep);
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+/* 标题区：与主区一起分摊竖向空间，让标题浮在上半屏中央而不是贴顶；音频开关固定在右上角 */
+.home__head {
+  text-align: center; flex: 1.5 1 auto; min-height: 0; margin-bottom: 8px; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0;
 }
+.home__audio { position: absolute; right: 0; top: 0; z-index: 2; }
+/* 标题：墨色主字 + 米色 / 鼠尾草双层硬投影（海报套印感）；整体慢速呼吸，逐字错位起伏 */
+.home__title {
+  position: relative; z-index: 1;
+  font-size: 58px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  line-height: 1.1;
+  color: var(--ink);
+  text-shadow: 3px 3px 0 var(--paper), 5px 5px 0 var(--sage);
+  animation: title-breathe 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+.home__title-ch { display: inline-block; animation: title-bob 2.4s ease-in-out infinite; }
+.home__title-ch:nth-child(2) { animation-delay: 0.16s; }
+.home__title-ch:nth-child(3) { animation-delay: 0.32s; }
+.home__title-ch:nth-child(4) { animation-delay: 0.48s; }
+.home__title-ch:nth-child(5) { animation-delay: 0.64s; }
+@keyframes title-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes title-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .home__tag {
-  display: inline-flex; align-items: center; margin-top: 6px;
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; margin-top: 10px;
   padding-bottom: 3px; border-bottom: 2px solid var(--sage);
 }
 .home__tag-text { font-size: 15px; font-style: italic; font-weight: 700; letter-spacing: 2px; color: var(--sage-deep); margin: 0 10px; }
-.home__tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sage); }
+.home__tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sage); animation: dot-pulse 1.8s ease-in-out infinite; }
+.home__tag-dot:last-child { animation-delay: 0.9s; }
+@keyframes dot-pulse { 0%, 100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(1.6); opacity: 1; } }
+
+/* 标题周围的漂浮装饰：星（旋转方块）/ 爪印（SVG）/ 圆点 / 空心环，各自不同的周期与相位慢慢漂 */
+.home__deco { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; overflow: hidden; }
+.deco { position: absolute; display: block; will-change: transform, opacity; }
+.deco--star { width: 10px; height: 10px; background: var(--sage); animation: deco-twinkle 2.6s ease-in-out infinite; }
+.deco--dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); opacity: 0.85; animation: deco-float 3.4s ease-in-out infinite; }
+.deco--ring { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--sage); animation: deco-float 4.2s ease-in-out infinite reverse; }
+.deco--paw {
+  width: 22px; height: 22px; opacity: 0.8;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%2393ad7f'><ellipse cx='12' cy='16.5' rx='5.6' ry='4.6'/><circle cx='4.6' cy='10.5' r='2.5'/><circle cx='9.2' cy='5.8' r='2.5'/><circle cx='14.8' cy='5.8' r='2.5'/><circle cx='19.4' cy='10.5' r='2.5'/></g></svg>") center / contain no-repeat;
+  animation: deco-float 3.8s ease-in-out infinite;
+}
+.deco-1 { left: 9%; top: 18%; animation-delay: 0.2s; }
+.deco-2 { left: 4%; top: 58%; transform: rotate(-18deg); animation-delay: 1.1s; }
+.deco-3 { left: 20%; top: 82%; animation-delay: 0.6s; }
+.deco-4 { right: 6%; top: 22%; animation-delay: 0.4s; }
+.deco-5 { right: 14%; top: 78%; width: 7px; height: 7px; animation-delay: 1.4s; }
+.deco-6 { right: 3%; top: 56%; transform: rotate(16deg); animation-delay: 0.9s; }
+.deco-7 { left: 28%; top: 8%; width: 6px; height: 6px; animation-delay: 1.8s; }
+.deco-8 { right: 26%; top: 10%; width: 7px; height: 7px; animation-delay: 0.8s; }
+@keyframes deco-twinkle {
+  0%, 100% { transform: rotate(45deg) scale(0.55); opacity: 0.35; }
+  50% { transform: rotate(45deg) scale(1.15); opacity: 1; }
+}
+@keyframes deco-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-9px) rotate(10deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home__title, .home__title-ch, .home__tag-dot, .deco, .hero-btn { animation: none; }
+}
 
 /* 主区：一个突出的主按钮 */
-.home__main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
-.home__hero-slot { margin-bottom: 22px; }
+.home__main { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
+/* 主页猫猫轮播：当前套系 9 个款式逐个从上方 Q 弹落下，停留片刻后掉出画面，下一只接着落下
+ * 外层 .home__hero-cat 只做位移（下落 / 弹跳），内层 .home__hero-cat-body 只做挤压拉伸，两层分开才不会互相拖慢；
+ * 每段关键帧单独指定缓动：下落 ease-in（重力感），弹起 ease-out，落地瞬间挤压、再慢慢回弹 */
+.home__hero { position: relative; flex-shrink: 0; width: 136px; height: 136px; margin-bottom: 18px; overflow: hidden; }
+.home__hero-shadow {
+  position: absolute; left: 50%; bottom: 6px; width: 84px; height: 14px; margin-left: -42px;
+  border-radius: 50%; background: rgba(46, 45, 40, 0.18);
+  transform-origin: 50% 50%; transform: scale(0.3); opacity: 0;
+  will-change: transform, opacity;
+}
+.home__hero-cat {
+  position: absolute; left: 50%; top: 4px; width: 112px; height: 112px; margin-left: -56px;
+  transform: translateY(-150%); will-change: transform;
+}
+.home__hero-cat-body { width: 100%; height: 100%; transform-origin: 50% 100%; will-change: transform; }
+.home__hero-cat .sprite__img { filter: drop-shadow(3px 4px 0 rgba(46, 45, 40, 0.22)); }
+.home__hero.is-drop .home__hero-cat { animation: hero-fall 0.9s linear both; }
+.home__hero.is-drop .home__hero-cat-body { animation: hero-squash 0.9s linear both; }
+.home__hero.is-drop .home__hero-shadow { animation: hero-shadow-fall 0.9s linear both; }
+.home__hero.is-leave .home__hero-cat { animation: hero-hop-out 0.5s linear both; }
+.home__hero.is-leave .home__hero-cat-body { animation: hero-hop-squash 0.5s linear both; }
+.home__hero.is-leave .home__hero-shadow { animation: hero-shadow-out 0.5s linear both; }
+/* 位移：自由落体 → 触地 → 弹起一大一小两次 */
+@keyframes hero-fall {
+  0%   { transform: translateY(-150%); animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
+  42%  { transform: translateY(0);     animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1); }
+  60%  { transform: translateY(-17%);  animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4); }
+  76%  { transform: translateY(0);     animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1); }
+  87%  { transform: translateY(-4%);   animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4); }
+  100% { transform: translateY(0); }
+}
+/* 挤压：下落时微拉长，触地瞬间压扁，回弹时拉长，二次触地再轻压 */
+@keyframes hero-squash {
+  0%   { transform: scale(0.94, 1.06); animation-timing-function: linear; }
+  40%  { transform: scale(0.94, 1.06); animation-timing-function: cubic-bezier(0.3, 0.7, 0.5, 1); }
+  45%  { transform: scale(1.28, 0.74); animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1); }
+  56%  { transform: scale(0.95, 1.06); animation-timing-function: ease-in-out; }
+  74%  { transform: scale(0.97, 1.03); animation-timing-function: cubic-bezier(0.3, 0.7, 0.5, 1); }
+  78%  { transform: scale(1.12, 0.9);  animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1); }
+  88%  { transform: scale(0.99, 1.01); animation-timing-function: ease-out; }
+  100% { transform: scale(1); }
+}
+@keyframes hero-shadow-fall {
+  0%   { transform: scale(0.3); opacity: 0; animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
+  10%  { opacity: 0.6; }
+  42%  { transform: scale(1.15); opacity: 1; animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1); }
+  60%  { transform: scale(0.85); animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4); }
+  76%  { transform: scale(1.05); animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1); }
+  87%  { transform: scale(0.96); animation-timing-function: cubic-bezier(0.6, 0, 0.85, 0.4); }
+  100% { transform: scale(1); opacity: 1; }
+}
+/* 离场：先蹲一下蓄力，小跳起来，再加速掉出画面 */
+@keyframes hero-hop-out {
+  0%   { transform: translateY(0);     animation-timing-function: ease-out; }
+  16%  { transform: translateY(2%);    animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1); }
+  42%  { transform: translateY(-24%);  animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
+  100% { transform: translateY(170%); }
+}
+@keyframes hero-hop-squash {
+  0%   { transform: scale(1);          animation-timing-function: ease-out; }
+  16%  { transform: scale(1.14, 0.86); animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1); }
+  36%  { transform: scale(0.9, 1.1);   animation-timing-function: linear; }
+  100% { transform: scale(0.9, 1.1); }
+}
+@keyframes hero-shadow-out {
+  0%   { transform: scale(1); opacity: 1; animation-timing-function: ease-out; }
+  16%  { transform: scale(1.1); animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1); }
+  42%  { transform: scale(0.8); opacity: 0.8; animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
+  100% { transform: scale(0.3); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home__hero-cat { transform: none; }
+  .home__hero-shadow { transform: none; opacity: 1; }
+  .home__hero.is-drop .home__hero-cat, .home__hero.is-drop .home__hero-cat-body, .home__hero.is-drop .home__hero-shadow,
+  .home__hero.is-leave .home__hero-cat, .home__hero.is-leave .home__hero-cat-body, .home__hero.is-leave .home__hero-shadow { animation: none; }
+  .home__hero.is-leave .home__hero-cat { opacity: 0; }
+}
 .hero-btn {
   -webkit-appearance: none; appearance: none; border: 0; font: inherit; cursor: pointer;
   display: flex; flex-direction: column; align-items: center;
@@ -122,17 +263,16 @@ body { background: var(--paper); color: var(--ink); }
   border-radius: 999px;
   box-shadow: 0 6px 0 var(--ember-dark), 0 0 0 3px var(--paper), 0 0 0 6px var(--sage);
   transition: transform 0.08s ease, box-shadow 0.08s ease;
+  animation: btn-breathe 2.8s ease-in-out infinite;
 }
-.hero-btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--ember-dark), 0 0 0 3px var(--paper), 0 0 0 6px var(--sage); }
+@keyframes btn-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+.hero-btn:active { animation: none; transform: translateY(5px); box-shadow: 0 1px 0 var(--ember-dark), 0 0 0 3px var(--paper), 0 0 0 6px var(--sage); }
 .hero-btn:focus { outline: none; }
 .hero-btn__main { font-size: 32px; font-weight: 900; letter-spacing: 4px; line-height: 1.1; }
 .hero-btn__sub { font-size: 12px; font-style: italic; font-weight: 700; letter-spacing: 1.5px; opacity: 0.9; margin-top: 6px; }
 .home__record { margin-top: 18px; font-size: 14px; font-style: italic; color: var(--ink-soft); }
 .home__record b { font-style: normal; font-size: 20px; font-weight: 900; color: var(--moss); margin: 0 2px; }
 
-/* 图标留空槽：换成图片后去掉虚线即可 */
-.slot { flex-shrink: 0; width: 84px; height: 84px; border-radius: 12px; border: 2px dashed rgba(125, 154, 106, 0.55); }
-.slot--lg { width: 120px; height: 120px; }
 
 /* 非重点入口：文字 + 下划线 */
 .home__nav { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding: 8px 0 14px; }
@@ -152,8 +292,12 @@ body { background: var(--paper); color: var(--ink); }
 .home__foot { flex-shrink: 0; margin: 0 -18px 0; }
 .home__foot .checker { height: 44px; height: calc(44px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
 @media (max-height: 640px) {
-  .home__title { font-size: 36px; }
-  .slot--lg { width: 88px; height: 88px; }
+  .home__title { font-size: 46px; letter-spacing: 3px; text-shadow: 2px 2px 0 var(--paper), 4px 4px 0 var(--sage); }
+  .home__head { padding: 4px 0; }
+  .deco--paw { width: 18px; height: 18px; }
+  .home__hero { width: 104px; height: 104px; margin-bottom: 12px; }
+  .home__hero-cat { width: 86px; height: 86px; margin-left: -43px; }
+  .home__hero-shadow { width: 64px; margin-left: -32px; }
   .hero-btn__main { font-size: 26px; }
   .home__foot .checker { height: 30px; height: calc(30px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))); }
 }
@@ -161,50 +305,56 @@ body { background: var(--paper); color: var(--ink); }
 /* ---------- 游戏页 ---------- */
 #screen-game { background: var(--paper); }
 
-/* 顶栏：墨黑标题带 */
-.hud {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  padding-top: calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
-  background: var(--ink);
-  color: var(--paper);
-  position: relative;
-}
-.hud__back {
-  -webkit-appearance: none; appearance: none; border: 2px solid var(--paper); background: transparent;
-  width: 34px; height: 34px; border-radius: 50%; font-size: 24px; line-height: 28px; color: var(--paper);
-  cursor: pointer; margin-right: 6px; flex-shrink: 0; text-align: center;
-}
-.hud__back:active { opacity: 0.6; }
-.hud__stat { display: flex; align-items: baseline; color: var(--paper); min-width: 0; }
-.hud__label { font-size: 12px; font-style: italic; letter-spacing: 1px; opacity: 0.8; margin: 0 3px; }
-.hud__num { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.hud__num--big { font-size: 28px; }
-.hud__stat--packs {
-  background: var(--ember); color: var(--paper); border-radius: 999px; padding: 3px 16px 3px 10px;
-  box-shadow: 0 3px 0 var(--ember-dark);
-}
-.hud__stat--packs .hud__label { opacity: 0.95; }
-.hud__stat--packs.is-bump { animation: bump 0.35s ease; animation-duration: calc(0.35s / var(--spd, 1)); }
-.hud__stat--packs.is-drop { animation: drop 0.35s ease; animation-duration: calc(0.35s / var(--spd, 1)); }
-@keyframes bump {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 var(--fx, transparent); }
-  40% { transform: scale(1.18); box-shadow: 0 0 0 5px var(--fx, transparent); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
-}
-@keyframes drop { 0% { transform: scale(1); } 40% { transform: scale(0.9); } 100% { transform: scale(1); } }
-.hud__pack-icon {
-  display: inline-block; width: 16px; height: 20px; border-radius: 3px; margin-right: 6px; align-self: center;
-  background: var(--paper); box-shadow: inset 0 0 0 2px var(--ember-dark); position: relative;
-}
-.hud__pack-icon::after { content: ''; position: absolute; left: 3px; right: 3px; top: 8px; height: 3px; background: var(--ember-dark); border-radius: 2px; }
+/* 顶部统计：一道下垂的圆弧切成 小黑 / 大红 / 小黑 三段（SVG，viewBox 375×125，随屏宽等比缩放）。
+ * 圆心在屏幕上方，中段最低（中线 y=94）、两端翘到 y≈68，弧顶两端离屏顶 51px 起，正好绕开水滴屏刘海和容器角上的按钮。
+ * 三段是同一圆的三截 round-cap 粗描边：侧段 34、主段 46；主段带 3px 硬投影，bump 时外圈闪一道 --fx 色的光。 */
+.stats { padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); }
+.arc { display: block; width: 100%; height: auto; overflow: visible; }
+.arc__seg { fill: none; stroke-linecap: round; }
+.arc__seg--side { stroke: var(--ink); stroke-width: 34; }
+.arc__seg--main { stroke: var(--ember); stroke-width: 46; }
+.arc__shadow { fill: none; stroke: var(--ember-dark); stroke-width: 46; stroke-linecap: round; transform: translateY(3px); }
+.arc__glow { fill: none; stroke: var(--fx, transparent); stroke-width: 46; stroke-linecap: round; opacity: 0; }
+.arc__text { font-family: inherit; text-anchor: middle; fill: var(--paper); }
+.arc__label { font-size: 11px; font-style: italic; font-weight: 700; letter-spacing: 1px; opacity: 0.85; }
+.arc__num { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.arc__num--big { font-size: 26px; }
+/* Chrome 61 没有 transform-box，SVG 元素的 transform-origin 相对画布原点，直接写主段中心的用户坐标 */
+#hud-packs-wrap { transform-origin: 187.5px 94px; }
+#hud-packs-wrap.is-bump { animation: bump 0.35s ease; animation-duration: calc(0.35s / var(--spd, 1)); }
+#hud-packs-wrap.is-drop { animation: drop 0.35s ease; animation-duration: calc(0.35s / var(--spd, 1)); }
+#hud-packs-wrap.is-bump .arc__glow { animation: arc-glow 0.35s ease; animation-duration: calc(0.35s / var(--spd, 1)); }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes drop { 0% { transform: scale(1); } 40% { transform: scale(0.92); } 100% { transform: scale(1); } }
+@keyframes arc-glow { 0% { opacity: 0; stroke-width: 46; } 40% { opacity: 0.9; stroke-width: 60; } 100% { opacity: 0; stroke-width: 46; } }
 
-/* 通告条：TIPS 黑带 */
+/* 音频开关：音乐 / 音效两个纯图形圆按钮，跟随所在容器的文字色（深底用 --paper，纸色底用 --moss）
+ * 关闭态：图形变淡 + 画一道斜杠；音效关闭时同时隐藏声波 */
+.audio-ctl { display: flex; align-items: center; color: var(--moss); }
+.audio-ctl--light { color: var(--paper); }
+.audio-btn {
+  -webkit-appearance: none; appearance: none; font: inherit; cursor: pointer;
+  width: 30px; height: 30px; padding: 0; border-radius: 50%;
+  border: 2px solid currentColor; background: transparent; color: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.audio-btn + .audio-btn { margin-left: 6px; }
+.audio-btn:active { transform: scale(0.9); }
+.audio-btn:focus { outline: none; }
+.audio-btn__icon { width: 62%; height: 62%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.audio-btn__fill { fill: currentColor; }
+.audio-btn__slash { display: none; stroke-width: 2.6; }
+.audio-btn.is-off { opacity: 0.45; }
+.audio-btn.is-off .audio-btn__slash { display: block; }
+.audio-btn.is-off .audio-btn__wave { display: none; }
+
+/* 通告条：TIPS 黑带；与静音开关同排，黑带占满剩余宽度 */
+.ticker-row { display: flex; align-items: center; margin: 12px 16px 0; }
+.ticker-row__audio { flex-shrink: 0; margin-left: 10px; }
 .ticker {
-  display: flex; align-items: center;
-  margin: 12px 16px 0; padding: 6px 10px 6px 6px;
+  display: flex; align-items: center; flex: 1; min-width: 0;
+  margin: 0; padding: 6px 10px 6px 6px;
   background: var(--ink); color: var(--paper); border-radius: 999px;
   min-height: 34px;
 }
@@ -223,6 +373,7 @@ body { background: var(--paper); color: var(--ink); }
   align-items: center;
   justify-content: center;
   min-height: 0;
+  position: relative;
   padding: 6px 16px;
   position: relative;
   overflow: hidden;
@@ -411,6 +562,179 @@ body { background: var(--paper); color: var(--ink); }
   55% { transform: translateY(0) scale(1.3, 0.8); opacity: 1; }
   100% { transform: scale(1.9); opacity: 0; }
 }
+/* ===== 套系 2「碰瓷猫」消除动作 =====
+ * 套系级共用前置半拍：0% → 20% 先「哎哟」向左歪倒压扁（碰瓷梗），20% 之后才是各款自己的动作。
+ * 九款都从同一个 20% 姿势出发，改这个姿势时九处同步改。 */
+/* 啃萝卜猫：分三口越啃越小，硬切 */
+.cell.is-removing[data-fx="carrot"] .cell__inner { animation: out-carrot 0.5s steps(5, end) both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-carrot {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  40% { transform: rotate(-10deg) translate(-3%, 3%) scale(0.78, 0.9); opacity: 1; }
+  60% { transform: rotate(-6deg) translate(4%, 2%) scale(0.52, 0.86); opacity: 1; }
+  80% { transform: rotate(-2deg) scale(0.26, 0.8); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+/* 躺平猫：向后倒下，摊成一张饼 */
+.cell.is-removing[data-fx="flat"] .cell__inner { animation: out-flat 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-flat {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  55% { transform: translate(-6%, 8%) rotate(-72deg); opacity: 1; }
+  78% { transform: translate(-8%, 14%) rotate(-90deg) scale(0.6, 1.15); opacity: 1; }
+  100% { transform: translate(-8%, 16%) rotate(-90deg) scale(0.1, 1.5); opacity: 0; }
+}
+/* 偷看猫：探一下头，再溜到墙后面（格子裁掉溜出去的部分） */
+.cell.is-removing[data-fx="peek"] { overflow: hidden; }
+.cell.is-removing[data-fx="peek"] .cell__inner { animation: out-peek 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-peek {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  42% { transform: translateY(-16%) scale(0.95, 1.08); opacity: 1; }
+  60% { transform: translateY(-8%) scale(1.02, 1); opacity: 1; }
+  100% { transform: translateY(125%) scale(0.9, 1.1); opacity: 1; }
+}
+/* 纸箱猫：箱盖压下，翻倒滑走 */
+.cell.is-removing[data-fx="box"] .cell__inner { animation: out-box 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-box {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  45% { transform: translateY(26%) scale(1.05, 0.55); opacity: 1; }
+  65% { transform: translateY(28%) rotate(8deg) scale(1.05, 0.5); opacity: 1; }
+  100% { transform: translate(95%, 20%) rotate(75deg) scale(0.7, 0.5); opacity: 0; }
+}
+/* 墨镜猫：歪一下马上摆回酷姿定格，再横着滑走 */
+.cell.is-removing[data-fx="cool"] .cell__inner { animation: out-cool 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-cool {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  32%, 70% { transform: rotate(0) scale(1.04); opacity: 1; }
+  100% { transform: translateX(135%) rotate(6deg) scale(0.95); opacity: 0; }
+}
+/* 奶茶猫：像被吸管吸走，向上拉长收成一条 */
+.cell.is-removing[data-fx="boba"] .cell__inner { animation: out-boba 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-boba {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  45% { transform: scale(1.1, 0.9) translateY(4%); opacity: 1; }
+  72% { transform: scale(0.55, 1.35) translateY(-25%); opacity: 1; }
+  100% { transform: scale(0.08, 1.6) translateY(-130%); opacity: 0; }
+}
+/* 推车猫：颠簸着向右滚出去 */
+.cell.is-removing[data-fx="cart"] .cell__inner { animation: out-cart 0.5s linear both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-cart {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  36% { transform: translate(8%, -4%) rotate(-6deg); opacity: 1; }
+  52% { transform: translate(30%, 2%) rotate(-3deg); opacity: 1; }
+  68% { transform: translate(58%, -5%) rotate(-6deg); opacity: 1; }
+  84% { transform: translate(90%, 1%) rotate(-3deg); opacity: 0.75; }
+  100% { transform: translate(135%, -4%) rotate(-6deg); opacity: 0; }
+}
+/* 比心猫：心跳两下再消失 */
+.cell.is-removing[data-fx="heart"] .cell__inner { animation: out-heart 0.5s ease-in-out both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-heart {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  38% { transform: scale(1.22); opacity: 1; }
+  52% { transform: scale(1); opacity: 1; }
+  66% { transform: scale(1.32); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+/* 雨衣猫：撑着伞左右摇摆着飘上去 */
+.cell.is-removing[data-fx="rain"] .cell__inner { animation: out-rain 0.5s ease-in-out both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-rain {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: rotate(-14deg) translate(-5%, 5%) scale(1.06, 0.9); opacity: 1; }
+  45% { transform: rotate(6deg) translateY(-8%); opacity: 1; }
+  70% { transform: rotate(-6deg) translateY(-45%); opacity: 1; }
+  100% { transform: rotate(4deg) translateY(-130%) scale(0.85); opacity: 0; }
+}
+/* ===== 套系 3「周末猫」消除动作 =====
+ * 套系级共用前置半拍：0% → 20% 先「伸个懒腰」竖向拉长一下，20% 之后才是各款自己的动作。 */
+/* 汉堡猫：啊呜两大口，越咬越小 */
+.cell.is-removing[data-fx="burger"] .cell__inner { animation: out-burger 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-burger {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  45% { transform: scale(1.18, 0.88); opacity: 1; }
+  62% { transform: scale(0.7, 0.8) rotate(8deg); opacity: 1; }
+  80% { transform: scale(0.42, 0.55) rotate(-8deg); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+/* 毯子猫：裹紧成蛋卷，滚着走 */
+.cell.is-removing[data-fx="blanket"] .cell__inner { animation: out-blanket 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-blanket {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  45% { transform: scale(0.85, 1); opacity: 1; }
+  100% { transform: translateX(-125%) rotate(-540deg) scale(0.6); opacity: 0; }
+}
+/* 观影猫：红青错位抖两下，再像被 3D 特效吓到一样冲出屏幕 */
+.cell.is-removing[data-fx="movie"] .cell__inner { animation: out-movie 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-movie {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  36% { transform: translateX(-4%); filter: drop-shadow(-6px 0 rgba(255, 59, 59, 0.85)) drop-shadow(6px 0 rgba(34, 211, 238, 0.85)); opacity: 1; }
+  52% { transform: translateX(4%); filter: drop-shadow(6px 0 rgba(255, 59, 59, 0.85)) drop-shadow(-6px 0 rgba(34, 211, 238, 0.85)); opacity: 1; }
+  68% { transform: translateX(0) scale(1.05); filter: drop-shadow(4px 5px 0 rgba(46, 45, 40, 0.32)); opacity: 1; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+/* 自拍猫：摆好 pose 定格，再淡出 */
+.cell.is-removing[data-fx="selfie"] .cell__inner { animation: out-selfie 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-selfie {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  34%, 70% { transform: rotate(-8deg) scale(1.06); opacity: 1; }
+  100% { transform: rotate(-8deg) scale(0.9); opacity: 0; }
+}
+/* 泡澡猫：沉进水里（格子裁掉沉下去的部分） */
+.cell.is-removing[data-fx="bath"] { overflow: hidden; }
+.cell.is-removing[data-fx="bath"] .cell__inner { animation: out-bath 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-bath {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  45% { transform: translateY(10%) scale(1.04, 0.96); opacity: 1; }
+  100% { transform: translateY(120%) scale(1, 0.9); opacity: 1; }
+}
+/* 购物猫：拎着袋子一蹦一蹦跳走 */
+.cell.is-removing[data-fx="shop"] .cell__inner { animation: out-shop 0.5s linear both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-shop {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  40% { transform: translate(-16%, -22%) scale(0.96, 1.06); opacity: 1; }
+  58% { transform: translate(-42%, 0) scale(1.1, 0.9); opacity: 1; }
+  78% { transform: translate(-75%, -22%) scale(0.96, 1.06); opacity: 1; }
+  100% { transform: translate(-125%, 0) scale(1.1, 0.9); opacity: 0; }
+}
+/* 续杯猫：越喝越鼓，鼓到爆 */
+.cell.is-removing[data-fx="refill"] .cell__inner { animation: out-refill 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-refill {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  45% { transform: scale(1.15); opacity: 1; }
+  72% { transform: scale(1.32, 1.25); opacity: 1; }
+  86% { transform: scale(1.4, 1.3); opacity: 1; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+/* 读书猫：像合上书一样原地翻面 */
+.cell.is-removing[data-fx="book"] .cell__inner { animation: out-book 0.5s ease-in both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-book {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  48% { transform: perspective(300px) rotateY(90deg) scaleX(0.9); opacity: 1; }
+  72% { transform: perspective(300px) rotateY(180deg); opacity: 1; }
+  100% { transform: perspective(300px) rotateY(270deg) scale(0.3); opacity: 0; }
+}
+/* 开车猫：先往右倒一下车，再一脚油门冲出左侧 */
+.cell.is-removing[data-fx="drive"] .cell__inner { animation: out-drive 0.5s cubic-bezier(0.5, 0, 0.9, 0.4) both; animation-duration: calc(0.5s / var(--spd, 1)); }
+@keyframes out-drive {
+  0% { transform: scale(1.14, 0.86) translateY(6%); opacity: 1; }
+  20% { transform: scale(0.94, 1.1) translateY(-5%); opacity: 1; }
+  42% { transform: translate(8%, 0) rotate(6deg); opacity: 1; }
+  60% { transform: translate(-10%, -3%) rotate(-5deg); opacity: 1; }
+  100% { transform: translate(-160%, -4%) rotate(-3deg); opacity: 0; }
+}
 .cell.is-lucky::after {
   content: '★'; position: absolute; top: -6px; right: -6px;
   width: 22px; height: 22px; border-radius: 50%; line-height: 22px; text-align: center;
@@ -473,8 +797,20 @@ body { background: var(--paper); color: var(--ink); }
   display: flex; flex-direction: column; align-items: center;
   position: relative;
 }
+/* 底栏主行：发牌 / 倍速居中，返回主页固定在最左 */
+.dock__row { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; min-height: 34px; }
+.dock__back {
+  -webkit-appearance: none; appearance: none; border: 2px solid var(--ink); background: var(--paper);
+  width: 34px; height: 34px; border-radius: 50%; font-size: 24px; line-height: 28px; color: var(--ink);
+  cursor: pointer; text-align: center; padding: 0;
+  position: absolute; left: 0; top: 50%; margin-top: -17px;
+  box-shadow: 0 2px 0 var(--ink);
+}
+.dock__back:active { transform: translateY(2px); box-shadow: none; }
+.dock__back-icon { display: block; margin-top: -2px; }
+.dock__row .btn--deal { margin-left: 46px; max-width: 314px; } /* 手动模式：让开左侧返回按钮 */
 .dock .checker {
-  width: 100vw; margin-top: 12px;
+  width: calc(100% + 32px); margin-top: 12px; /* 吃掉底栏左右 16px 内边距，铺满框宽（不用 100vw：宽屏时框比视口窄） */
   height: 22px; height: calc(22px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
 }
 .btn--deal { width: 100%; max-width: 360px; padding: 12px 24px; display: flex; flex-direction: column; align-items: center; }
@@ -482,6 +818,7 @@ body { background: var(--paper); color: var(--ink); }
 /* ---------- 覆盖层 ---------- */
 .overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  max-width: var(--app-max); margin: 0 auto; /* 宽屏：与 #app 同宽同位 */
   display: none;
   align-items: center; justify-content: center;
   background: rgba(46, 45, 40, 0.55);
@@ -506,6 +843,8 @@ body { background: var(--paper); color: var(--ink); }
   content: ''; position: absolute; top: 8px; left: 14px; right: 14px; height: 4px;
   background: repeating-linear-gradient(90deg, var(--sage) 0, var(--sage) 12px, transparent 12px, transparent 18px);
 }
+.banner__audio { position: absolute; right: 12px; top: 18px; z-index: 2; color: var(--acc); } /* 跟随结算主题色 */
+.banner__audio .audio-btn { width: 26px; height: 26px; }
 .banner__ribbon {
   position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
   background: var(--ink); color: var(--paper); font-weight: 900; font-size: 18px; letter-spacing: 3px;
@@ -560,7 +899,7 @@ body { background: var(--paper); color: var(--ink); }
 .lucky-opt {
   -webkit-appearance: none; appearance: none; cursor: pointer;
   background: var(--paper-2); border: 2px solid var(--sage); border-radius: 8px; padding: 10px; position: relative;
-  transition: transform 0.08s ease, background-color 0.1s ease;
+  transition: transform 0.08s ease, background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease, opacity 0.25s ease;
 }
 .lucky-opt::before { content: ''; display: block; padding-top: 100%; }
 .lucky-opt .sprite { position: absolute; top: 8%; left: 8%; width: 84%; height: 84%; }
@@ -570,11 +909,86 @@ body { background: var(--paper); color: var(--ink); }
 }
 .lucky-opt:active { transform: scale(0.96); background: #fbe9dd; border-color: var(--ember); }
 
+/* 套系名：不出弹层就能看到当前套系，切换靠贴在页面两侧的箭头 */
+.lucky-skin-switch { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.lucky-skin-switch__name { font-size: 14px; font-weight: 800; color: var(--moss); }
+
+/* 左右切换箭头：贴页面两侧，实心圆底无边框，持续呼吸缩放提示可点；
+   #lucky 单独加宽两侧留白给箭头独立站位，不会被卡片 / 九宫格盖住 */
+#lucky { padding-left: 48px; padding-right: 48px; }
+.lucky-skin-arrow {
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+  position: absolute; top: 50%; transform: translateY(-50%) scale(1);
+  width: 40px; height: 40px; border-radius: 50%; border: 0; padding: 0;
+  background: var(--ember); color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 10px rgba(46, 45, 40, 0.35);
+  transition: opacity 0.2s ease;
+  animation: lucky-arrow-breathe 1.7s ease-in-out infinite;
+  z-index: 1;
+}
+.lucky-skin-arrow svg { width: 22px; height: 22px; display: block; }
+.lucky-skin-arrow--prev { left: 4px; }
+.lucky-skin-arrow--next { right: 4px; }
+.lucky-skin-arrow:active { animation-play-state: paused; transform: translateY(-50%) scale(0.85); }
+#lucky.is-showcase .lucky-skin-arrow { opacity: 0; pointer-events: none; }
+@keyframes lucky-arrow-breathe {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) { .lucky-skin-arrow { animation: none; } }
+
+/* 常规待机：逐格轮转的轮盘微光，一圈扫过 9 格后循环 */
+@keyframes lucky-roulette {
+  0%, 4%, 13%, 100% { border-color: var(--sage); background: var(--paper-2); box-shadow: none; }
+  7% { border-color: var(--ember); background: #fbe9dd; box-shadow: 0 0 0 3px rgba(216, 85, 44, 0.18); }
+}
+/* 只在非随机演出时跑：待机动画会持续覆写 border / background / box-shadow，若与演出同时运行会把演出高亮完全盖掉 */
+#lucky.is-open:not(.is-showcase) .lucky-grid:not(.is-spinning) .lucky-opt { animation: lucky-roulette 7.2s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 0.8s); }
+
+/* 随机演出：逐格高亮飞快掠过，末尾定格在选中目标
+ * 选择器统一带 #lucky 前缀，优先级压过待机规则；演出中关掉过渡，42 ms 一格也能亮满 */
+#lucky .lucky-grid.is-spinning .lucky-opt { animation: none; transition: none; border-color: var(--sage); background: var(--paper-2); box-shadow: none; transform: none; }
+#lucky .lucky-grid.is-spinning .lucky-opt.is-spinlit {
+  border-color: var(--ember); background: #fbe9dd;
+  box-shadow: 0 0 0 3px rgba(216, 85, 44, 0.28);
+  transform: scale(1.05);
+}
+#lucky .lucky-grid.is-spinning .lucky-opt.is-picked {
+  border-color: var(--ember-dark, var(--ember)); background: #fbe9dd;
+  box-shadow: 0 0 0 4px rgba(216, 85, 44, 0.4);
+  transform: scale(1.08);
+  animation: lucky-picked-pop 0.45s ease;
+}
+@keyframes lucky-picked-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.16); }
+  100% { transform: scale(1.08); }
+}
+
+/* 选中展示（手动 / 随机共用）：套系切换、随机按钮淡出，选中格放大并移到棋盘中央（--dx / --dy 由 JS 写入） */
+#lucky .lucky-skin-switch, #lucky #btn-lucky-random { transition: opacity 0.25s ease; }
+#lucky.is-showcase .lucky-skin-switch, #lucky.is-showcase #btn-lucky-random { opacity: 0; pointer-events: none; }
+#lucky.is-showcase .lucky-opt {
+  transition: opacity 0.25s ease, transform 0.42s cubic-bezier(0.2, 1.3, 0.4, 1),
+    border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+#lucky.is-showcase .lucky-opt:not(.is-chosen) { opacity: 0; transform: scale(0.88); pointer-events: none; }
+#lucky.is-showcase .lucky-opt.is-chosen {
+  z-index: 2; pointer-events: none;
+  border-color: var(--ember); background: #fbe9dd;
+  box-shadow: 0 0 0 4px rgba(216, 85, 44, 0.35), 0 14px 28px rgba(46, 45, 40, 0.2);
+  transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(1.7);
+}
+@media (prefers-reduced-motion: reduce) {
+  #lucky.is-showcase .lucky-opt { transition-duration: 0.01s; }
+}
+
 /* 皮肤套系列表 */
 .skin-list { margin: 8px 0 14px; }
 .skin-item {
   -webkit-appearance: none; appearance: none; cursor: pointer; font: inherit; text-align: left;
-  display: flex; align-items: center; width: 100%; padding: 10px 12px; border-radius: 8px;
+  display: flex; flex-wrap: wrap; align-items: center; width: 100%; padding: 10px 12px; border-radius: 8px;
   background: var(--paper-2); border: 2px solid var(--sage); color: var(--ink); position: relative;
 }
 .skin-item + .skin-item { margin-top: 10px; }
@@ -582,14 +996,80 @@ body { background: var(--paper); color: var(--ink); }
 .skin-item__previews { display: flex; flex-shrink: 0; }
 .skin-item__previews .sprite { width: 44px; height: 44px; }
 .skin-item__previews .sprite + .sprite { margin-left: 4px; }
-.skin-item__text { margin-left: 12px; min-width: 0; }
-.skin-item__name { font-size: 16px; font-weight: 900; letter-spacing: 1px; display: block; }
+.skin-item__text { margin-left: 12px; min-width: 0; flex: 1 1 auto; }
+.skin-item__name { font-size: 16px; font-weight: 900; letter-spacing: 1px; display: flex; align-items: center; }
 .skin-item__meta { font-size: 12px; font-style: italic; color: var(--ink-soft); display: block; margin-top: 2px; }
 .skin-item__check {
   display: none; margin-left: auto; width: 24px; height: 24px; border-radius: 50%; background: var(--ember);
   color: var(--paper); font-size: 14px; line-height: 24px; text-align: center; flex-shrink: 0;
 }
 .skin-item.is-active .skin-item__check { display: block; }
+
+.skin-item.is-locked .skin-item__previews { filter: grayscale(1); opacity: 0.55; }
+.skin-item.is-locked .skin-item__name { color: var(--ink-soft); }
+.skin-item__lock {
+  margin-left: 8px; flex-shrink: 0; font-size: 10px; font-weight: 800; letter-spacing: 1px; white-space: nowrap;
+  padding: 2px 7px; border-radius: 999px; background: var(--ink-soft); color: var(--paper);
+}
+.skin-item__bar { flex: 1 1 100%; width: 100%; margin-top: 10px; }
+.skin-item.is-shake { animation: shake-x 0.3s ease; }
+@keyframes shake-x { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* ---------- 皮肤解锁进度条 ---------- */
+.pbar { position: relative; height: 18px; border-radius: 999px; background: var(--paper-3); border: 2px solid var(--ink); overflow: hidden; }
+.pbar__fill { height: 100%; width: 0; border-radius: 999px; background: var(--ember); }
+.pbar__text { position: absolute; left: 0; right: 0; top: 0; line-height: 14px; font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--ink); text-align: center; }
+.pbar--mini { height: 8px; border-width: 1.5px; }
+.pbar--big { height: 24px; }
+.pbar--big .pbar__text { line-height: 20px; font-size: 12px; }
+
+/* 皮肤解锁进度弹窗：沿用结算横幅规格（同宽、同边框、同标题带），强调色取目标套系首款主题色 */
+.banner--unlock { padding: 30px 18px 18px; }
+.banner--unlock .banner__tagline { margin: 0 0 6px; }
+.unlock__name { display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; letter-spacing: 4px; color: var(--ink); margin-bottom: 10px; }
+.unlock__name-tag { flex-shrink: 0; margin-left: 10px; font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 3px 9px; border-radius: 999px; background: var(--ink-soft); color: var(--paper); }
+.banner--unlock.is-unlocked .unlock__name-tag { background: var(--acc); }
+/* 剪影轮播：复用 .home__hero 的落下 / 弹跳 / 跳出动画，尺寸放大；剪影 = 图片压黑，解锁后去掉 is-silhouette 恢复彩色 */
+.unlock__hero-box { margin: 0 auto 2px; width: 200px; height: 200px; }
+.unlock__hero-box .home__hero-cat { width: 168px; height: 168px; margin-left: -84px; }
+.unlock__hero-box .home__hero-shadow { width: 124px; height: 18px; margin-left: -62px; }
+.home__hero.is-silhouette .sprite__img { filter: brightness(0) opacity(0.78); }
+/* 解锁瞬间：整块白闪一下 → 猫猫背后光晕脉动 → 彩色猫猫重新落下 */
+.unlock__glow {
+  position: absolute; left: 50%; top: 50%; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%;
+  background: radial-gradient(circle, var(--acc-soft) 0, var(--acc-soft) 30%, transparent 70%);
+  opacity: 0; transform: scale(0.4);
+}
+.banner--unlock.is-unlocked .unlock__glow { animation: glow-pulse 1.3s ease-out infinite; }
+@keyframes glow-pulse { 0% { opacity: 0; transform: scale(0.5); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
+.unlock__flash { position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-radius: 7px; background: #fff; opacity: 0; pointer-events: none; z-index: 3; }
+.banner--unlock.is-unlocked .unlock__flash { animation: flash-out 0.7s ease-out both; }
+@keyframes flash-out { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+.unlock__caption { font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--ink-soft); }
+.unlock__hero { margin: 0 0 10px; }
+.unlock__hero .banner__hero-num { font-size: 52px; }
+.unlock__hero .banner__hero-num.is-pop { animation: bump 0.45s ease; }
+/* 进度条：深色 = 历史最高，浅色 = 本局得分；填充上有一道来回扫的高光，涨满时整条弹一下 */
+.pbar__ghost { position: absolute; left: 0; top: 0; height: 100%; width: 0; border-radius: 999px; background: var(--acc, var(--ember)); opacity: 0.28; }
+.pbar__text { z-index: 1; }
+.banner--unlock .pbar__fill { position: relative; background: var(--acc); overflow: hidden; }
+.banner--unlock .pbar__fill::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: shine 1.4s linear infinite;
+}
+@keyframes shine { 0% { left: -40%; } 100% { left: 110%; } }
+.pbar.is-full { animation: bump 0.45s ease; border-color: var(--acc); }
+.unlock__hint { font-size: 15px; font-weight: 800; color: var(--acc); margin: 14px 0 18px; min-height: 22px; }
+.unlock__tap { font-size: 12px; font-style: italic; color: var(--ink-soft); margin-top: 10px; }
+.banner--unlock.is-unlocked .unlock__name { color: var(--acc); animation: bump 0.6s ease infinite alternate; }
+.banner__unlock { margin-top: 8px; text-align: center; }
+.banner__unlock .pbar__fill { background: var(--acc); }
+.banner__unlock-text { display: block; font-size: 12px; font-style: italic; color: var(--ink-soft); margin-top: 4px; }
+.banner__actions .banner__unlock + .btn { margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  .banner--unlock.is-unlocked .unlock__name, .skin-item.is-shake, .banner--unlock .pbar__fill::after, .banner--unlock.is-unlocked .unlock__glow { animation: none; }
+}
 
 /* ---------- 暂存区（游戏页棋盘下方） ---------- */
 .stash {
@@ -701,6 +1181,7 @@ body { background: var(--paper); color: var(--ink); }
 .wipe-bg.is-active { display: block; }
 .wipe {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  max-width: var(--app-max); margin: 0 auto; /* 宽屏：与 #app 同宽同位 */
   display: none; overflow: hidden;
   z-index: 50; pointer-events: none;
   color: var(--ember);
@@ -796,8 +1277,143 @@ body { background: var(--paper); color: var(--ink); }
 .banner[data-theme="party"] .banner__ribbon { animation: bump 0.8s ease infinite alternate; }
 .banner[data-theme="gym"] .banner__hero-num { animation: bump 0.9s ease infinite alternate; }
 .banner[data-theme="music"] .fortune__stamp { animation-duration: 0.7s; }
+/* ===== 套系 2「碰瓷猫」结算主题 ===== */
+/* 啃萝卜猫：斜排胡萝卜条 */
+.banner[data-theme="carrot"] {
+  background-color: #fff0e3;
+  background-image: repeating-linear-gradient(-60deg, rgba(247, 103, 7, 0.13) 0, rgba(247, 103, 7, 0.13) 6px, transparent 6px, transparent 22px);
+}
+/* 躺平猫：草地横纹 + 底部一抹草绿 */
+.banner[data-theme="flat"] {
+  background-color: #f1f8e6;
+  background-image:
+    linear-gradient(180deg, transparent 0, transparent 88%, rgba(130, 201, 30, 0.18) 100%),
+    repeating-linear-gradient(180deg, transparent 0, transparent 18px, rgba(130, 201, 30, 0.14) 18px, rgba(130, 201, 30, 0.14) 20px);
+}
+/* 偷看猫：灰卡纸 + 顶部一条墙沿 */
+.banner[data-theme="peek"] {
+  background-color: #f1f2f4;
+  background-image: linear-gradient(180deg, rgba(134, 142, 150, 0.28) 0, rgba(134, 142, 150, 0.28) 14px, rgba(134, 142, 150, 0.08) 14px, rgba(134, 142, 150, 0.08) 16px, transparent 16px);
+}
+/* 纸箱猫：牛皮纸 + 一道斜胶带 */
+.banner[data-theme="box"] {
+  background-color: #f3e5cf;
+  background-image:
+    linear-gradient(35deg, transparent 0, transparent 46%, rgba(233, 216, 166, 0.85) 46%, rgba(233, 216, 166, 0.85) 54%, transparent 54%),
+    repeating-linear-gradient(0deg, rgba(176, 122, 69, 0.07) 0, rgba(176, 122, 69, 0.07) 1px, transparent 1px, transparent 6px);
+}
+/* 墨镜猫：冷灰底 + 一道斜光带 */
+.banner[data-theme="cool"] {
+  background-color: #e3e6ea;
+  background-image: linear-gradient(115deg, transparent 0, transparent 38%, rgba(255, 255, 255, 0.85) 44%, rgba(255, 255, 255, 0.85) 50%, transparent 56%);
+}
+/* 奶茶猫：奶茶色 + 底部一排珍珠 */
+.banner[data-theme="boba"] {
+  background-color: #f4e9df;
+  background-image: radial-gradient(circle at 50% 100%, rgba(61, 35, 20, 0.5) 0 5px, transparent 6px);
+  background-size: 22px 22px;
+  background-repeat: repeat-x;
+  background-position: 0 100%;
+}
+/* 推车猫：收据横线 + 右上角条形码 */
+.banner[data-theme="cart"] {
+  background-color: #fff8ec;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(46, 45, 40, 0.45) 0, rgba(46, 45, 40, 0.45) 2px, transparent 2px, transparent 5px, rgba(46, 45, 40, 0.45) 5px, rgba(46, 45, 40, 0.45) 6px, transparent 6px, transparent 9px),
+    repeating-linear-gradient(180deg, transparent 0, transparent 16px, rgba(245, 159, 0, 0.18) 16px, rgba(245, 159, 0, 0.18) 17px);
+  background-size: 72px 16px, auto;
+  background-repeat: no-repeat, repeat;
+  background-position: calc(100% - 14px) 10px, 0 0;
+}
+/* 比心猫：粉底 + 心形波点 */
+.banner[data-theme="heart"] {
+  background-color: #fdeef3;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(230, 73, 128, 0.2) 0 4px, transparent 5px),
+    radial-gradient(circle at 75% 75%, rgba(247, 131, 172, 0.28) 0 3px, transparent 4px);
+  background-size: 36px 36px;
+}
+/* 雨衣猫：斜雨丝 */
+.banner[data-theme="rain"] {
+  background-color: #e7f0fa;
+  background-image: repeating-linear-gradient(115deg, transparent 0, transparent 14px, rgba(25, 113, 194, 0.16) 14px, rgba(25, 113, 194, 0.16) 16px, transparent 16px, transparent 30px);
+}
+/* ===== 套系 3「周末猫」结算主题 ===== */
+/* 汉堡猫：快餐包装纸的红白竖条 */
+.banner[data-theme="burger"] {
+  background-color: #fff4e0;
+  background-image: repeating-linear-gradient(90deg, rgba(224, 49, 49, 0.12) 0, rgba(224, 49, 49, 0.12) 10px, transparent 10px, transparent 22px);
+}
+/* 毯子猫：粉色格纹毯 */
+.banner[data-theme="blanket"] {
+  background-color: #fdf0f4;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(247, 131, 172, 0.14) 0, rgba(247, 131, 172, 0.14) 6px, transparent 6px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(247, 131, 172, 0.14) 0, rgba(247, 131, 172, 0.14) 6px, transparent 6px, transparent 26px);
+}
+/* 观影猫：上下两条胶片齿孔 */
+.banner[data-theme="movie"] {
+  background-color: #eef0fb;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(54, 79, 199, 0.7) 0, rgba(54, 79, 199, 0.7) 10px, transparent 10px, transparent 18px),
+    repeating-linear-gradient(90deg, rgba(54, 79, 199, 0.7) 0, rgba(54, 79, 199, 0.7) 10px, transparent 10px, transparent 18px);
+  background-size: 100% 7px, 100% 7px;
+  background-position: 8px 6px, 8px calc(100% - 6px);
+  background-repeat: repeat-x, repeat-x;
+}
+/* 自拍猫：紫色光斑 */
+.banner[data-theme="selfie"] {
+  background-color: #f5f0fc;
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(112, 72, 232, 0.16) 0 22px, transparent 23px),
+    radial-gradient(circle at 88% 10%, rgba(255, 212, 59, 0.3) 0 14px, transparent 15px),
+    radial-gradient(circle at 92% 70%, rgba(112, 72, 232, 0.14) 0 28px, transparent 29px),
+    radial-gradient(circle at 6% 88%, rgba(255, 212, 59, 0.24) 0 16px, transparent 17px);
+}
+/* 泡澡猫：一缸泡泡 */
+.banner[data-theme="bath"] {
+  background-color: #e6f8fb;
+  background-image:
+    radial-gradient(circle at 20% 30%, transparent 0 9px, rgba(34, 184, 207, 0.28) 9px 11px, transparent 12px),
+    radial-gradient(circle at 70% 70%, transparent 0 6px, rgba(34, 184, 207, 0.28) 6px 8px, transparent 9px),
+    radial-gradient(circle at 85% 20%, transparent 0 4px, rgba(34, 184, 207, 0.28) 4px 5px, transparent 6px);
+  background-size: 80px 80px;
+}
+/* 购物猫：黄底斜条 + 粉色价签点 */
+.banner[data-theme="shop"] {
+  background-color: #fff9e6;
+  background-image:
+    radial-gradient(circle at 75% 25%, rgba(240, 101, 149, 0.35) 0 3px, transparent 4px),
+    repeating-linear-gradient(-45deg, rgba(250, 176, 5, 0.14) 0, rgba(250, 176, 5, 0.14) 8px, transparent 8px, transparent 24px);
+  background-size: 48px 48px, auto;
+}
+/* 续杯猫：奶茶色 + 吸管竖条 */
+.banner[data-theme="refill"] {
+  background-color: #f6ede4;
+  background-image: repeating-linear-gradient(90deg, rgba(169, 113, 62, 0.13) 0, rgba(169, 113, 62, 0.13) 5px, transparent 5px, transparent 30px, rgba(247, 131, 172, 0.18) 30px, rgba(247, 131, 172, 0.18) 35px, transparent 35px, transparent 60px);
+}
+/* 读书猫：笔记本横线 + 左侧红色页边线 */
+.banner[data-theme="book"] {
+  background-color: #eaf1fb;
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent 26px, rgba(240, 62, 62, 0.35) 26px, rgba(240, 62, 62, 0.35) 28px, transparent 28px),
+    repeating-linear-gradient(180deg, transparent 0, transparent 21px, rgba(25, 113, 194, 0.16) 21px, rgba(25, 113, 194, 0.16) 22px);
+}
+/* 开车猫：底部一条带虚线的路面 */
+.banner[data-theme="drive"] {
+  background-color: #fdecec;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 212, 59, 0.9) 0, rgba(255, 212, 59, 0.9) 14px, transparent 14px, transparent 26px),
+    linear-gradient(180deg, transparent 0, transparent calc(100% - 22px), rgba(73, 80, 87, 0.28) calc(100% - 22px), rgba(73, 80, 87, 0.28) 100%);
+  background-size: 100% 3px, auto;
+  background-position: 0 calc(100% - 10px), 0 0;
+  background-repeat: repeat-x, no-repeat;
+}
+.banner[data-theme="drive"] .banner__ribbon { animation: bump 0.9s ease infinite alternate; }
+.banner[data-theme="heart"] .fortune__stamp { animation-duration: 0.7s; }
+.banner[data-theme="cart"] .banner__ribbon { animation: bump 0.9s ease infinite alternate; }
 @media (prefers-reduced-motion: reduce) {
-  .banner[data-theme="party"] .banner__ribbon, .banner[data-theme="gym"] .banner__hero-num { animation: none; }
+  .banner[data-theme="party"] .banner__ribbon, .banner[data-theme="gym"] .banner__hero-num, .banner[data-theme="cart"] .banner__ribbon, .banner[data-theme="drive"] .banner__ribbon { animation: none; }
 }
 
 /* ---------- 自动发牌模式：开局发牌遮罩 ---------- */
@@ -946,3 +1562,67 @@ html.is-paused #screen-game * { animation-play-state: paused !important; }
   100% { transform: rotate(-4deg) scale(1); opacity: 1; }
 }
 .banner__hero { margin-top: 10px; }
+
+/* ---------- 每日排行 ---------- */
+.overlay--top { z-index: 12; } /* 可以从结算页上层打开 */
+.banner__rank {
+  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; font: inherit;
+  display: inline-block; margin: 2px auto 8px; padding: 5px 14px; border-radius: 999px;
+  background: var(--acc-soft, rgba(216, 85, 44, 0.16)); color: var(--ink);
+  font-size: 13px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.3;
+}
+.banner__rank:active { opacity: 0.7; }
+.banner__rank.is-pending, .banner__rank.is-off { background: transparent; color: var(--ink-soft); font-weight: 600; font-style: italic; }
+.sheet--rank { padding-bottom: 16px; }
+.rank-status { font-size: 13px; font-style: italic; color: var(--ink-soft); min-height: 18px; margin-bottom: 8px; }
+.rank-list {
+  list-style: none; text-align: left; margin: 0 0 10px;
+  max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--paper-2); border: 2px solid var(--sage); border-radius: 8px;
+}
+.rank-row { display: flex; align-items: center; padding: 8px 10px; font-size: 14px; }
+.rank-row + .rank-row { border-top: 1px dashed rgba(147, 173, 127, 0.7); }
+.rank-row__no { width: 30px; flex-shrink: 0; font-weight: 900; font-style: italic; color: var(--moss); }
+.rank-row--1 .rank-row__no, .rank-row--2 .rank-row__no, .rank-row--3 .rank-row__no { color: var(--ember); font-size: 16px; }
+.rank-row__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: var(--ink); }
+.rank-row__score { flex-shrink: 0; margin-left: 8px; font-weight: 900; color: var(--ink); }
+.rank-row__score small { font-size: 11px; font-weight: 700; color: var(--ink-soft); margin-left: 2px; }
+.rank-row.is-me { background: rgba(216, 85, 44, 0.14); }
+.rank-row.is-me .rank-row__name::after {
+  content: '我'; display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px;
+  background: var(--ember); color: var(--paper); font-size: 10px; font-weight: 900; line-height: 16px; vertical-align: 1px;
+}
+.rank-me { font-size: 13px; font-weight: 700; color: var(--moss); margin-bottom: 10px; }
+.rank-nick { display: flex; align-items: stretch; margin-bottom: 12px; }
+.rank-nick__input {
+  flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 8px 10px;
+  border: 2px solid var(--sage); border-radius: 8px; background: var(--paper); color: var(--ink);
+  -webkit-user-select: text; user-select: text; outline: none;
+}
+.rank-nick__input:focus { border-color: var(--ember); }
+.sheet .rank-nick .btn { width: auto; flex-shrink: 0; margin-left: 8px; padding: 8px 16px; font-size: 14px; }
+.rank-actions { display: flex; align-items: center; }
+.sheet .rank-actions .btn { width: auto; flex: 1; }
+.sheet .rank-actions .btn + .btn { margin-left: 10px; }
+
+/* ---------- 回放（结算页「重播本局」） ---------- */
+/* 结算页按钮并排一行：重播本局 / 保存战绩图 */
+.banner__row { display: flex; margin-top: 10px; }
+.banner__actions .banner__row .btn { flex: 1; margin-top: 0; padding-left: 12px; padding-right: 12px; font-size: 16px; white-space: nowrap; }
+.banner__actions .banner__row .btn + .btn { margin-left: 10px; }
+.banner__actions .banner__row + .btn { margin-top: 10px; }
+/* 底栏「回放中」标签：纸底墨框，红点呼吸 */
+.replay-tag {
+  display: none; align-items: center; height: 34px; padding: 0 12px 0 10px; margin-right: 8px;
+  border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink);
+  font-size: 13px; font-weight: 900; letter-spacing: 1px; white-space: nowrap;
+}
+.replay-tag__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ember); margin-right: 6px; animation: replay-blink 1s ease-in-out infinite; }
+@keyframes replay-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .replay-tag__dot { animation: none; } }
+/* 回放模式：无论自动 / 手动发牌，底栏只留 回放中 + 倍速；没有发牌按钮与开局遮罩 */
+#screen-game.is-replay .replay-tag { display: inline-flex; }
+#screen-game.is-replay .btn--deal, #screen-game.is-replay .deal-mask { display: none; }
+#screen-game.is-replay .speed { display: flex; }
+#screen-game.is-replay .dock { padding-top: 8px; }
+#screen-game.is-replay .speed__btn { min-width: 44px; padding: 0 8px; } /* 给标签让出宽度，避开左下角返回键 */

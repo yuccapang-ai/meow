@@ -87,13 +87,15 @@
 
 ## 九、技术约束（小工具容器）
 
-- 媒体必须是**包内文件**，`data:` / `blob:` 音频源被容器 CSP 拦截，外链也不行。
-- 最低基线 Android 8.1 / Chrome 61：`<audio>` 和 Web Audio API 都可用。SFX 想低延迟应走 Web Audio，
-  但它需要 `fetch` / `XHR` 读到包内文件的字节再 `decodeAudioData`。**这一点要第一个在真机容器里验证**，
-  容器以 file 或自定义 scheme 加载时 XHR 可能被拒；不行就退回 `new Audio(url)` 池化方案。
+- **zip 不允许音频文件类型**（上传端实测拒收 `.ogg`，白名单只有 html / css / js / 图片 / 字体 / json），
+  `<audio>` 又不接受 `data:` / `blob:` 源，`fetch` / `XHR` 也被禁。唯一可行路径：音频以 base64 写进 `.js` 数据文件
+  （`tools/build-audio.js` → `app/js/audio-data.js`），运行时 `atob` 成字节后用 Web Audio `decodeAudioData` 解码，
+  整个过程没有资源加载，不受 CSP media-src 约束。
+- 体积门禁（performance-budget §1）：单条 base64 解码后 ≤ 1 MiB，> 100 KiB 提示风险。SFX 每条几 KB；BGM 压到
+  48 kbps 单声道 32 kHz 约 430 KB，是唯一超过 100 KiB 的条目。构建脚本会对超限报错、超建议值告警。
+- 最低基线 Android 8.1 / Chrome 61：Web Audio 完整可用（`decodeAudioData` 回调式）。
 - 自动播放策略：所有声音必须在首次用户手势后解锁，最合适的点是首页「开始游戏」。解锁时顺手预热所有 SFX。
-- 格式：mp3 兼容面最广。`<audio loop>` 播 mp3 在循环点会有可闻空隙，BGM 若用 `<audio>` 请用 ogg 或裁到刚好；
-  用 Web Audio 的 `loop = true` 则没有这个问题。
+- 格式：解码走 Web Audio，ogg / mp3 / wav 都行；BGM 用 AudioBuffer `loop = true`，循环点无缝，不存在 `<audio loop>` 播 mp3 的空隙问题。
 - 体积预算：SFX 单声道 44.1k / 96 kbps，20 条以内合计约 300 KB；BGM 128 kbps 90 秒约 1.4 MB。整包音频控制在 2 MB 内。
 - 静音开关：首页加一个，状态存 `localStorage`（建议键 `ttddp.sound.v1`），BGM 和 SFX 分开记。
 - 混音规则：同一个音 40 ms 内只放一次；连发的音（撕票、猫落地）随机 ±5% 音高；总线留 -6 dB 余量防止结算时叠爆。
@@ -126,3 +128,59 @@
 搜索关键词速查（英文）：`paper tear`、`ticket rip`、`card fan`、`poker chip`、`coin drop`、`wooden stamp`、
 `rubber stamp thud`、`zipper`、`whoosh short`、`boing`、`rattle can`、`dice shake`、`confetti pop`、
 `success chime`、`fail womp`、`camera shutter`、`ukulele loop`、`bossa nova loop`、`lofi loop`。
+
+## 十一、当前实现（2026-09-04）
+
+- 音效层：`app/js/sound.js`（`window.TurtleSound`），素材在 `app/audio/`，27 个 Kenney Interface Sounds ogg（CC0）+ 1 个撕纸 wav，共约 234 KB。
+- 播放路径：`app/js/audio-data.js`（base64，`tools/build-audio.js` 生成，`pack.sh` 自动执行）→ `atob` → `decodeAudioData`
+  → `AudioBufferSourceNode`。SFX 脚本加载时分批预解码；BGM 最后解码并提前挂上源，AudioContext 被首次手势 resume 的瞬间响起。
+  没有 AudioContext 或数据文件时 `TurtleSound.mode()` 返回 `none`，全部静默。
+- 解锁：每次 pointerdown / touchend / mousedown / click / keydown 都尝试 `ctx.resume()`；切后台 `ctx.suspend()`。
+- 源文件：`app/audio/` 只作为构建输入，不进 zip；`_orig/` 存 BGM 原始 256 kbps 版本。
+- 开关：首页导航「音效：开 / 关」，存 `localStorage` 键 `ttddp.sound.v1`。
+- 转场音通过 `TurtleWipe.run` 新增的 `onPhase(name)` 回调接入，wipe.js 本身不依赖音效层。
+- 改音只改 `sound.js` 顶部的 `SFX` 表：`files` 轮播、`vol` 音量、`rate` 随机音高区间、`throttle` 同名最小间隔（默认 40 ms）。
+
+### 事件 → 文件映射（2026-09-04 第二版：按频谱分析换掉尖锐音）
+
+选音依据：用 Web Audio 解码全部 100 个候选，算频谱重心、2–5 kHz 能量占比、4 kHz 以上占比。
+换掉的：open_001 / close_001（重心 >11 kHz 嘶声）、minimize_004 / maximize_004（高频 swoosh）、minimize_007（2.2 kHz 单音）、
+tick_*、toggle_*、glass_004 / 005、confirmation_003（2–5 kHz 占比 >90%）。保留的都在重心 1.5 kHz 以下。
+
+| 事件名 | 文件 | 触发点 |
+| --- | --- | --- |
+| tap | back_002（木质短敲） | 发牌按钮、皮肤选中、开关重新打开 |
+| open / close | maximize_008 / minimize_008（低频软 swoosh） | 规则、皮肤、幸运款弹层开合，分享预览关闭 |
+| select | confirmation_001 | 选中幸运款（含随机） |
+| fall + zip | minimize_009 + scroll_002（低频滚动垫底，音量 0.3） | 转场落下（同时触发） |
+| land | bong_001 | 转场着地 |
+| cover / reveal | maximize_009 / minimize_006 | 转场放大 / 露出 |
+| dealDrop | drop_004 | 发牌扣卡包 |
+| fan | click_002 / 003 / 005 连发（20 ms 木质 tick） | 票券扇形甩出 |
+| tear | **tear.wav**（freesound #556939 fmaudio「tearing paper 3」，转成 44.1k/16bit 单声道，13 KB），±6% 音高 | 撕票根 |
+| catLand | drop_002 / 003，±6% 音高，音量 0.35 | 猫落地 |
+| hitPair / hitLine / hitSlam | question_002 / question_001 / confirmation_004 | 命中高亮 |
+| lucky | glass_001 | 幸运星加成 |
+| pop | pluck_002，±8% 音高 | 一组消除爆开 |
+| coin | glass_003 / glass_001 | 加卡包 |
+| thump | bong_001 | 连线 / 大满贯震盘 |
+| clear | confirmation_002 | 清空盘面 |
+| womp | error_006 | 零消除，摇晃按钮盖出 |
+| rattle | back_002 / 004 / 003 连发 6 次，每 70 ms，±10% 音高 | 摇晃棋盘 |
+| result0..3 | error_005 / confirmation_001 / 002 / 004 | 结算横幅，按运势档 |
+| shimmer | glass_001，音高 1.15 | 大吉时结算音后 250 ms 追加 |
+| stamp | bong_001，音高 0.8 | 运势印章盖下 |
+| record | select_004 | 新纪录 |
+
+现在包内 28 个音效文件共约 234 KB。tear.wav 的许可同样要到 freesound 页面确认（fmaudio 的作品多为 CC0，但以页面为准）。
+
+### 这包素材覆盖不到的（待补）
+
+- **BGM**（2026-09-04 已接）：`app/audio/bgm.mp3`，来源 freesound #723173「funky beats 2」by ncone，72 秒立体声 256 kbps，2.3 MB。
+  用 `<audio loop>` 流式播放（`sound.js` 的 `BGM` 配置：常态音量 0.4，结算弹层期间压到 0.12，350 ms 渐变），首次手势起播，切后台暂停，首页有「音乐」开关（键 `ttddp.bgm.v1`）。
+  待办：① 到 freesound 页面确认许可（ncone 的作品不一定是 CC0，若是 CC BY 需在页面署名）；② 转码到 128 kbps 可减到约 1.1 MB；
+  ③ mp3 用 `<audio loop>` 循环点会有几十毫秒空隙，介意的话转 ogg 或在 DAW 里把首尾裁到拍点。
+- **纸撕、拉锁、摇罐子**：现在分别用 scratch、scratch_004、toggle 连发近似，听感偏电子，最值得换成实物录音（freesound 筛 CC0）。
+- **硬币 / 筹码**：现在用玻璃叮声代替；Kenney Casino Audio 包里有真的筹码声。
+- **iOS**：素材是 ogg，iOS 17 以前的 WebView 不能播。上线前把 `app/audio` 转成 mp3 并把 `sound.js` 的 `EXT` 改成 `.mp3`（本机没装 ffmpeg，需要另行转码）。
+- 快门（分享）与票身爆开两处 P2 未接。
