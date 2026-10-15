@@ -14,7 +14,7 @@ for (var step = 0; step < 10; step++) { now += 100000; travel.tick(); assert.str
 collection.recordRun('cats', [0,30,30], 'three');
 travel.tick(); now += 100000; travel.tick();
 assert.strictEqual(travel.list().filter(function (entry) { return entry.travelling; }).length, 0, 'three residents must all stay home');
-collection.recordRun('cats', [0,0,0,30,30,30,30,30,30], 'nine');
+collection.recordRun('cats', [0,0,0,30,30,30,30,30,630], 'nine');
 travel.tick(); now += 90001;
 var departures = travel.tick();
 assert.strictEqual(departures.length, 6);

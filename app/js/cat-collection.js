@@ -6,6 +6,7 @@
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
   var KEY = 'ttddp.catCollection.v1';
+  var BODY_UNLOCK_AT = 30, HOME_SLOT_STEP = 100;
   var names = ['甜甜圈猫', '码农猫', '音乐猫', '咖啡猫', '摄影猫', '厨师猫', '健身猫', '画家猫', '派对猫'];
   var ids = ['donut', 'coder', 'music', 'coffee', 'photo', 'chef', 'fitness', 'painter', 'party'];
   var specials = ['吃甜甜圈', '敲键盘', '听歌打拍子', '喝咖啡', '拍照片', '煎鸡蛋', '举哑铃', '画爪印', '吹派对喇叭'];
@@ -13,7 +14,7 @@
     return { id: ids[i], name: name, index: i, skin: 'cats', special: specials[i],
       portrait: './skins/cats/' + (i + 1) + '.webp',
       atlas: './assets/room/cats/' + ids[i] + '-actions-v1.webp',
-      initial: i === 0, homeAt: i === 0 ? 0 : 30, specialAt: 50 };
+      initial: i === 0, bodyAt: i === 0 ? 0 : BODY_UNLOCK_AT, homeAt: i * HOME_SLOT_STEP, specialAt: 50 };
   });
   function integer(n) { return typeof n === 'number' && isFinite(n) ? Math.max(0, Math.min(1000000000, Math.floor(n))) : 0; }
   function emptyCounts() { return [0, 0, 0, 0, 0, 0, 0, 0, 0]; }
@@ -29,11 +30,15 @@
         data.lastRun = typeof saved.lastRun === 'string' ? saved.lastRun : null;
       }
     } catch (e) { /* 新存档或存储不可用时仍可在当前会话游玩。 */ }
+    function totalCount(skin) {
+      return (data.counts[skin] || emptyCounts()).reduce(function (total, count) { return total + count; }, 0);
+    }
     function progress(id) {
       var cat = catalog.filter(function (c) { return c.id === id; })[0];
       if (!cat) return null;
-      var count = (data.counts[cat.skin] || emptyCounts())[cat.index];
-      return { cat: cat, count: count, home: count >= cat.homeAt, special: count >= cat.specialAt };
+      var count = (data.counts[cat.skin] || emptyCounts())[cat.index], total = totalCount(cat.skin);
+      var body = count >= cat.bodyAt;
+      return { cat: cat, count: count, total: total, body: body, home: body && total >= cat.homeAt, special: count >= cat.specialAt };
     }
     function list() { return catalog.map(function (cat) { return progress(cat.id); }); }
     function recordRun(skin, counts, runId, replay) {
@@ -44,6 +49,7 @@
       try { storage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* 保留会话内进度。 */ }
       var milestones = [];
       list().forEach(function (p, i) {
+        if (p.body && !before[i].body) milestones.push({ id: p.cat.id, name: p.cat.name, kind: 'body', label: '解锁本体' });
         if (p.home && !before[i].home) milestones.push({ id: p.cat.id, name: p.cat.name, kind: 'home', label: '入住啦' });
         if (p.special && !before[i].special) milestones.push({ id: p.cat.id, name: p.cat.name, kind: 'special', label: '学会了' + p.cat.special });
       });

@@ -33,6 +33,7 @@ assert.strictEqual(travel.wake('donut'), true, 'cats above five energy can wake'
 assert.strictEqual(cat('donut').sleeping, false);
 
 collection.recordRun('cats', [0,30,30,30,30,30,30,30,30], 'unlock');
+collection.recordRun('cats', [0,100,100,100,100,100,100,100,100], 'home-slots');
 travel.tick();
 now += 90001;
 var departures = travel.tick();

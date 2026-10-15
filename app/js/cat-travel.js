@@ -127,7 +127,7 @@
       sync(now); advanceAll(now);
       return collection.list().map(function (progress) {
         var entry = data.cats[progress.cat.id];
-        return { cat: progress.cat, unlocked: progress.home, travelling: !!(entry && entry.endsAt),
+        return { cat: progress.cat, bodyUnlocked: progress.body, count: progress.count, total: progress.total, unlocked: progress.home, travelling: !!(entry && entry.endsAt),
           remaining: entry && entry.endsAt ? Math.max(0, entry.endsAt - now) : 0,
           startedAt: entry ? entry.startedAt : 0, endsAt: entry ? entry.endsAt : 0,
           energy: entry ? Math.round(entry.energy * 10) / 10 : MAX_ENERGY, maxEnergy: MAX_ENERGY,

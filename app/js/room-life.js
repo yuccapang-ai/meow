@@ -51,7 +51,13 @@
         if (panel.hidden) return;
         var row = rows[index], state = states.filter(function (item) { return item.id === entry.cat.id; })[0];
         row.element.setAttribute('data-location', entry.travelling ? 'away' : entry.unlocked ? 'home' : 'locked');
-        row.status.textContent = !entry.unlocked ? '未入住 · 收集 30 只邀请它' : entry.travelling ? '旅游中 · ' + countdown(entry.remaining) + ' 后回家 · ' + energyLabel(entry) : '在家 · ' + (entry.sleeping ? '睡觉中' : state ? state.activity : '休息中') + ' · ' + energyLabel(entry);
+        if (!entry.unlocked) {
+          row.status.textContent = !entry.bodyUnlocked ? '未解锁本体 · 还需' + (entry.cat.bodyAt - entry.count) + '只' : '本体已解锁 · 套系累计还需' + (entry.cat.homeAt - entry.total) + '只可入住';
+        } else if (entry.travelling) {
+          row.status.textContent = '旅游中 · ' + countdown(entry.remaining) + ' 后回家 · ' + energyLabel(entry);
+        } else {
+          row.status.textContent = '在家 · ' + (entry.sleeping ? '睡觉中' : state ? state.activity : '休息中') + ' · ' + energyLabel(entry);
+        }
         row.button.textContent = entry.travelling ? '召回' : entry.sleeping && entry.energy > travel.sleepThreshold ? '叫醒' : entry.sleeping ? '睡眠中' : entry.unlocked ? '找它' : '待入住';
         row.button.disabled = !entry.unlocked || (entry.sleeping && entry.energy <= travel.sleepThreshold);
         row.button.setAttribute('aria-label', (entry.travelling ? '召回' : entry.sleeping ? '叫醒' : '找到') + entry.cat.name);

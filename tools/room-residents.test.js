@@ -82,7 +82,7 @@ assert.strictEqual(donut.style.transform, start); assert.strictEqual(scheduled.s
 collection.recordRun('cats', [49,29], 'near'); room.enter(); room.layout(1875); room.start();
 assert.strictEqual(world.children.length, 1);
 assert.strictEqual(room.perform('donut', 'special'), false);
-collection.recordRun('cats', [1,1], 'unlock'); room.enter(); room.layout(1875); readyImages(); room.start();
+collection.recordRun('cats', [21,1], 'unlock'); room.enter(); room.layout(1875); readyImages(); room.start();
 assertSeparated();
 assert.strictEqual(world.children.length, 2);
 assert.strictEqual(room.perform('donut', 'special'), true);
@@ -91,7 +91,7 @@ assert.strictEqual(room.perform('coder', 'special'), false);
 assert.strictEqual(room.perform('coder', 'sleep'), true);
 findButton.click(); assert.ok(isFinite(camera));
 
-collection.recordRun('cats', [0,20,50,50,50,50,50,50,50], 'all');
+collection.recordRun('cats', [0,20,50,50,50,50,50,50,450], 'all');
 room.enter(); room.layout(1875); readyImages(); room.start();
 assertSeparated();
 assert.strictEqual(world.children.length, 9);
