@@ -46,7 +46,7 @@ function body(el) {
   return { x: x, y: y, right: x + frame.width / atlas.cell * size * scale, bottom: y + frame.height / atlas.cell * size * scale };
 }
 function assertSeparated() {
-  var visible = world.children.filter(function (el) { return !el.hidden && el.style.transform; });
+  var visible = world.children.filter(function (el) { return !el.hidden && el.style.transform && el.getAttribute('data-cat-id') && !el.getAttribute('data-tree'); });
   visible.forEach(function (el, index) {
     var a = body(el);
     visible.slice(index + 1).forEach(function (other) {
@@ -175,3 +175,67 @@ assert.strictEqual(ids['collection-list'].children.length, 9);
 assert.ok(ids['collection-list'].children.every(function (card) { return card.children[1].children.every(function (button) { return button.disabled === false; }); }));
 assert.ok(ids['collection-summary'].textContent.indexOf('9 / 9') >= 0);
 console.log('PASS: nine cats actively roam with limited edge overlap; safe spawns/resizes, sleeping obstacles, no teleporting or jitter, distinct gait, unlocks, pause/resume and collection cards.');
+
+var Travel = require('../app/js/cat-travel.js'), wallTime = 1000000;
+var initialTravel = { version: 1, cats: {}, furniture: { leaf: 1, cloud: 1, mushroom: 1, ladder: 1, nest: 1 } };
+var travelStore = { getItem: function () { return JSON.stringify(initialTravel); }, setItem: function (key, value) { initialTravel = JSON.parse(value); } };
+var trips = Travel.create({ collection: collection, storage: travelStore, now: function () { return wallTime; }, random: seededMath.random });
+vm.runInContext(fs.readFileSync(require.resolve('../app/js/room-furniture.js'), 'utf8'), context);
+world = new Element('div'); media.matches = false;
+viewport.clientWidth = 375; viewport.clientHeight = 667;
+room = window.TurtleRoomResidents.create({ world: world, viewport: viewport, footer: { offsetHeight: 210 }, status: status,
+  findButton: findButton, background: { complete: true, naturalWidth: 2103 }, moveTo: function (value) { camera = value; }, travel: trips });
+room.enter(); room.layout(937.5, 667, 1, 0); readyImages(); room.start();
+function cats() { return world.children.filter(function (element) { return !!element.getAttribute('data-cat-id'); }); }
+function trees() { return world.children.filter(function (element) { return !!element.getAttribute('data-tree-id'); }); }
+assert.strictEqual(trees().length, 5);
+assert.strictEqual(cats().length, 9);
+var jumped = new Set(), landed = new Set(), perched = new Set(), occupiedBefore = {};
+for (var furnitureFrame = 0; furnitureFrame < 7200; furnitureFrame++) {
+  tick();
+  var occupants = {};
+  cats().forEach(function (element) {
+    var catId = element.getAttribute('data-cat-id'), treeId = element.getAttribute('data-tree');
+    assert.ok(!/NaN|Infinity/.test(element.style.transform + element.children[1].style.transform));
+    if (treeId) {
+      assert.ok(!occupants[treeId], 'each tree can be reserved by only one cat'); occupants[treeId] = catId;
+      if (element.getAttribute('data-state') === 'jump') jumped.add(catId);
+      if (element.getAttribute('data-state') === 'sleep') perched.add(catId);
+    } else if (occupiedBefore[catId]) landed.add(catId);
+    occupiedBefore[catId] = treeId;
+  });
+  trees().forEach(function (element) {
+    assert.strictEqual(element.getAttribute('data-occupied'), occupants[element.getAttribute('data-tree-id')] || null, 'reservation matches actual cat');
+  });
+}
+assert.strictEqual(jumped.size, 9, 'all nine cats can jump without the special-action unlock');
+assert.strictEqual(perched.size, 9, 'all nine cats reach and use a platform');
+assert.strictEqual(landed.size, 9, 'all nine cats jump down and safely return to the floor');
+wallTime += 90001; trips.tick(); room.refresh();
+assert.strictEqual(cats().filter(function (element) { return !element.hidden; }).length, 3);
+var travellers = trips.list().filter(function (entry) { return entry.travelling; });
+travellers.forEach(function (entry) {
+  assert.strictEqual(room.focus(entry.cat.id), false);
+  assert.strictEqual(room.perform(entry.cat.id, 'walk'), false);
+  assert.strictEqual(actor(entry.cat.id).getAttribute('data-tree'), null, 'departure releases the tree');
+});
+var recalledId = travellers[0].cat.id;
+assert.ok(trips.recall(recalledId)); room.refresh();
+assert.strictEqual(actor(recalledId).hidden, false);
+assert.strictEqual(cats().filter(function (element) { return !element.hidden; }).length, 4);
+assertSeparated();
+room.leave(); var beforeOffline = cats().map(function (element) { return element.style.transform; });
+wallTime += 600000; trips.tick(); room.refresh();
+assert.ok(cats().every(function (element) { return element.hidden; }), 'returning cats remain hidden outside the room');
+room.enter(); room.layout(937.5, 667, 1, 0); room.start();
+assert.ok(cats().filter(function (element) { return !element.hidden; }).length >= 3);
+for (furnitureFrame = 0; furnitureFrame < 1800; furnitureFrame++) tick();
+viewport.clientWidth = 320; viewport.clientHeight = 480; room.layout(675, 480, 1, 0);
+assertSeparated();
+assert.ok(trees().every(function (element) { return !element.getAttribute('data-occupied'); }), 'resizing releases every platform');
+for (furnitureFrame = 0; furnitureFrame < 600; furnitureFrame++) tick();
+media.matches = true; media.listener();
+assert.strictEqual(scheduled.size, 0);
+assert.ok(trees().every(function (element) { return !element.getAttribute('data-occupied'); }), 'reduced motion leaves no stuck reservations');
+assertSeparated(); room.leave();
+console.log('PASS: all nine cats automatically jump up/down five exclusive trees; safe landings, travelling visibility, recall, offline returns, resize and reduced motion.');

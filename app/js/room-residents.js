@@ -6,13 +6,21 @@
     var collection = root.TurtleCatCollection.get(), residents = [], active = false;
     var selected = 'donut', raf = 0, lastTime = 0, width = 0, height = 0, size = 0;
     var clearanceX = 0, clearanceY = 0, layoutKey = '';
+    var travel = options.travel, furniture = root.TurtleRoomFurniture ? root.TurtleRoomFurniture.create(world) : null;
     var bounds = { left: 0, right: 1, back: 0.6, front: 0.8 };
     var reduced = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : null;
     function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
     function find(id) { return residents.filter(function (r) { return r.cat.id === id; })[0]; }
+    function away(resident) { return travel && travel.isAway(resident.cat.id); }
+    function activity(resident) {
+      if (away(resident)) return '旅游中';
+      if (resident.jump) return resident.jump.down ? '跳下猫爬架' : '跳上猫爬架';
+      if (resident.tree) return '猫爬架上打盹';
+      return resident.player.action() === 'sleep' ? '睡觉中' : resident.player.label();
+    }
     function updateStatus(r) {
       if (r.cat.id !== selected) return;
-      options.status.textContent = r.cat.name + ' · ' + (r.failed ? '点击猫咪重试动作' : r.player.label());
+      options.status.textContent = r.cat.name + ' · ' + (away(r) ? '旅游中 · 可在猫咪状态召回' : r.failed ? '点击猫咪重试动作' : activity(r));
     }
     function paint(r) {
       if (!r.placed) return;
@@ -20,6 +28,14 @@
       r.el.style.transform = 'translate3d(' + (r.x * width - size / 2).toFixed(2) + 'px,' +
         (r.y * height - size * 232 / 256).toFixed(2) + 'px,0) scale(' + (0.88 + depth * 0.12).toFixed(3) + ')';
       r.el.style.zIndex = String(1 + Math.round(r.y * 100));
+      if (r.tree || r.lift) {
+        var squash = r.jump ? Math.sin(Math.min(1, r.jump.elapsed / 0.9) * Math.PI * 2) * 0.1 : 0;
+        var scale = 0.88 + depth * 0.12;
+        r.facing.style.transform = 'translateY(' + (-r.lift / scale).toFixed(2) + 'px) scale(' + (r.direction * (1 - squash)) + ',' + (1 + squash) + ')';
+        r.shadow.style.opacity = '0.25';
+      } else {
+        r.facing.style.transform = 'scaleX(' + r.direction + ')'; r.shadow.style.opacity = '1';
+      }
       if (r.ready && r.frame !== r.player.frame()) {
         r.frame = r.player.frame();
         r.sprite.style.backgroundPosition = ((r.frame % 4) * 100 / 3) + '% ' + (Math.floor(r.frame / 4) * 100 / 3) + '%';
@@ -38,8 +54,10 @@
     // 只保护身体中心的空间，允许边缘轻微交叠；检查实际移动路段，防止穿身。
     function pathClear(r, x, y) {
       return residents.every(function (other) {
-        if (other === r || !other.placed) return true;
-        var offsets = [(r.x - other.x) * width, (r.y - other.y) * height];
+        if (other === r || !other.placed || away(other) || (other.tree && (!other.jump || !other.jump.down))) return true;
+        var otherX = other.jump && other.jump.down ? other.jump.toX : other.x;
+        var otherY = other.jump && other.jump.down ? other.jump.toY : other.y;
+        var offsets = [(r.x - otherX) * width, (r.y - otherY) * height];
         var deltas = [(x - r.x) * width, (y - r.y) * height];
         var gaps = [clearanceX - 0.01, clearanceY - 0.01];
         var enter = 0, leave = 1;
@@ -107,6 +125,63 @@
       r.rests++;
       play(r, collection.progress(r.cat.id).special && r.rests % 2 === 1 ? 'special' : 'sleep');
     }
+    function releaseTree(resident) {
+      if (furniture) furniture.release(resident.tree);
+      resident.tree = null; resident.jump = null; resident.lift = 0; resident.perch = 0;
+      resident.el.setAttribute('data-tree', ''); resident.cooldown = 8 + Math.random() * 10;
+    }
+    function jumpTo(resident, targetX, targetY, lift, down) {
+      resident.jump = { elapsed: 0, fromX: resident.x, fromY: resident.y, toX: targetX, toY: targetY,
+        fromLift: resident.lift, toLift: lift, down: down };
+      resident.direction = targetX >= resident.x ? 1 : -1;
+      play(resident, 'jump');
+    }
+    function interact(resident) {
+      if (!furniture || resident.tree || resident.cooldown > 0 || away(resident)) return false;
+      var tree = furniture.reserve(resident, width, height, size);
+      if (!tree) return false;
+      resident.tree = tree; resident.el.setAttribute('data-tree', tree.id);
+      jumpTo(resident, tree.x, tree.y, tree.lift, false); return true;
+    }
+    function landingClear(resident, targetX, targetY) {
+      return residents.every(function (other) {
+        if (other === resident || !other.placed || away(other)) return true;
+        if (other.jump && other.jump.down) return Math.abs((other.jump.toX - targetX) * width) >= clearanceX || Math.abs((other.jump.toY - targetY) * height) >= clearanceY;
+        if (other.tree) return true;
+        return Math.abs((other.x - targetX) * width) >= clearanceX || Math.abs((other.y - targetY) * height) >= clearanceY;
+      });
+    }
+    function jumpDown(resident) {
+      if (!resident.tree || resident.jump) return false;
+      for (var ring = 1; ring <= 3; ring++) {
+        for (var direction = 0; direction < 12; direction++) {
+          var angle = direction * Math.PI / 6;
+          var targetX = clamp(resident.x + Math.cos(angle) * size * ring * 0.65 / width, bounds.left, bounds.right);
+          var targetY = clamp(resident.y + Math.sin(angle) * size * ring * 0.65 / height, bounds.back, bounds.front);
+          if (landingClear(resident, targetX, targetY)) { jumpTo(resident, targetX, targetY, 0, true); return true; }
+        }
+      }
+      resident.perch = 0.5; return false;
+    }
+    function furnitureStep(resident, elapsed) {
+      if (!resident.jump) {
+        resident.perch -= elapsed; resident.player.update(elapsed, 0);
+        if (resident.player.finished()) resident.player.play('sleep');
+        if (resident.perch <= 0) jumpDown(resident);
+        return;
+      }
+      var jump = resident.jump;
+      jump.elapsed += elapsed;
+      var progress = clamp(jump.elapsed / 0.9, 0, 1), eased = progress * progress * (3 - 2 * progress);
+      resident.x = jump.fromX + (jump.toX - jump.fromX) * eased;
+      resident.y = jump.fromY + (jump.toY - jump.fromY) * eased;
+      resident.lift = jump.fromLift + (jump.toLift - jump.fromLift) * eased + Math.sin(progress * Math.PI) * size * 0.42;
+      resident.player.update(elapsed, 0);
+      if (progress < 1) return;
+      resident.jump = null;
+      if (jump.down) { releaseTree(resident); destination(resident); }
+      else { resident.perch = 5 + Math.random() * 7; play(resident, 'sleep'); }
+    }
     function load(r) {
       if (r.ready || r.loading) return;
       r.loading = true; r.failed = false;
@@ -130,16 +205,17 @@
       var fallback = document.createElement('img'); fallback.className = 'room-cat__fallback'; fallback.src = cat.portrait;
       fallback.alt = ''; fallback.draggable = false;
       facing.appendChild(sprite); facing.appendChild(fallback); el.appendChild(shadow); el.appendChild(facing); world.appendChild(el);
-      var r = { cat: cat, el: el, facing: facing, sprite: sprite, fallback: fallback, image: new Image(),
+      var r = { cat: cat, el: el, facing: facing, sprite: sprite, fallback: fallback, shadow: shadow, image: new Image(),
         player: root.TurtleCatActions.create({ profile: 'collection', specialLabel: cat.special }),
         x: 0, y: 0.65, goalX: 0, goalY: 0.65, direction: 1, rests: 0, wait: 0, stroll: 0,
-        turn: residents.length % 2 ? -1 : 1,
+        turn: residents.length % 2 ? -1 : 1, tree: null, jump: null, lift: 0, cooldown: 0, perch: 0, wasAway: false,
         placed: false, ready: false, loading: false, failed: false, frame: -1 };
       el.addEventListener('click', function () {
         selected = cat.id;
         if (root.TurtleSound) root.TurtleSound.play('tap');
         if (!r.ready) { load(r); updateStatus(r); return; }
         if (reduced && reduced.matches) { updateStatus(r); return; }
+        if (r.tree) { jumpDown(r); return; }
         if (r.player.action() === 'sleep') play(r, 'wake'); else rest(r);
       });
       residents.push(r); load(r);
@@ -147,6 +223,22 @@
     function sync() {
       collection.list().forEach(function (p) { if (p.home && !find(p.cat.id)) add(p.cat); });
       options.findButton.disabled = residents.length === 0;
+    }
+    function refresh() {
+      if (!travel) return;
+      sync();
+      if (furniture) { furniture.sync(travel.furniture()); if (width) furniture.layout(width, height, size, bounds); }
+      var returned = false;
+      residents.forEach(function (resident) {
+        var travelling = away(resident);
+        if (travelling && !resident.wasAway) { releaseTree(resident); play(resident, 'idle'); }
+        if (!travelling && resident.wasAway) { resident.placed = false; returned = true; }
+        resident.wasAway = travelling; resident.el.hidden = travelling || !active || !width;
+        updateStatus(resident);
+      });
+      if (returned) layoutKey = '';
+      if (width) layout(width, height, 1, 0);
+      start();
     }
     function layout(worldWidth, worldHeight, sceneScale, worldTop) {
       width = worldWidth; height = worldHeight || viewport.clientHeight;
@@ -177,6 +269,7 @@
         }
       }
       residents.forEach(function (r, i) {
+        if (r.tree) releaseTree(r);
         r.el.style.width = size + 'px'; r.el.style.height = size + 'px';
         var preferredX = r.placed ? r.x : (i === 0 ? (viewport.scrollLeft + viewport.clientWidth * 0.45) / width : 0.12 + ((i - 1) % 4) * 0.22);
         var preferredY = r.placed ? r.y : (bounds.back + bounds.front) / 2;
@@ -187,17 +280,23 @@
         }
         var slot = slots.splice(best, 1)[0];
         r.x = slot.x; r.y = slot.y; r.goalX = r.x; r.goalY = r.y; r.placed = true;
-        if (r.player.action() === 'walk') waitForSpace(r);
+        if (r.player.action() === 'walk' || r.player.action() === 'jump') waitForSpace(r);
         paint(r);
       });
+      if (furniture) furniture.layout(width, height, size, bounds);
     }
     function tick(now) {
       raf = 0;
       if (!active || document.hidden) { lastTime = 0; return; }
       var dt = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0; lastTime = now;
       residents.forEach(function (r) {
-        if (!r.ready || !r.placed) return;
-        if (r.player.action() === 'walk') {
+        if (!r.ready || !r.placed || away(r)) return;
+        r.cooldown = Math.max(0, r.cooldown - dt);
+        if (r.tree) {
+          furnitureStep(r, dt);
+        } else if (r.player.action() === 'walk' && interact(r)) {
+          furnitureStep(r, dt);
+        } else if (r.player.action() === 'walk') {
           walkStep(r, dt);
         } else if (r.wait > 0) {
           r.wait = Math.max(0, r.wait - dt);
@@ -215,33 +314,43 @@
     function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; lastTime = 0; }
     function start() {
       if (!active || document.hidden || !width || !options.background.complete || !options.background.naturalWidth) return;
-      residents.forEach(function (r) { r.el.hidden = false; });
-      if (reduced && reduced.matches) { residents.forEach(function (r) { play(r, 'idle'); }); return; }
+      residents.forEach(function (r) { r.el.hidden = !!away(r); });
+      if (reduced && reduced.matches) {
+        var occupied = residents.some(function (resident) { return !!resident.tree; });
+        if (occupied) { layoutKey = ''; layout(width, height, 1, 0); }
+        residents.forEach(function (r) { play(r, 'idle'); }); return;
+      }
       if (!raf && residents.some(function (r) { return r.ready; })) raf = requestAnimationFrame(tick);
     }
     function focus(id) {
       var r = find(id); if (!r) return false;
+      if (away(r)) { selected = id; updateStatus(r); return false; }
       selected = id; updateStatus(r); options.moveTo(r.x * width - viewport.clientWidth / 2); return true;
     }
     function perform(id, action) {
       var r = find(id), p = collection.progress(id);
-      if (!r || !p.home || ['walk', 'sleep', 'special'].indexOf(action) < 0 || (action === 'special' && !p.special)) return false;
+      if (!r || !p.home || ['walk', 'sleep', 'special', 'jump'].indexOf(action) < 0 || (action === 'special' && !p.special)) return false;
+      if (away(r)) { focus(id); return false; }
       focus(id);
       if (reduced && reduced.matches) return true;
+      if (r.tree) { jumpDown(r); return true; }
+      if (action === 'jump') { r.cooldown = 0; return interact(r); }
       if (action === 'walk') destination(r); else play(r, action);
       start(); return true;
     }
     options.findButton.addEventListener('click', function () {
-      if (!residents.length) return;
-      var index = residents.indexOf(find(selected));
-      focus(residents[(index + 1) % residents.length].cat.id);
+      var home = residents.filter(function (resident) { return !away(resident); });
+      if (!home.length) return;
+      var index = home.indexOf(find(selected));
+      focus(home[(index + 1) % home.length].cat.id);
       if (root.TurtleSound) root.TurtleSound.play('tap');
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); else start(); });
     if (reduced) reduced.addListener(function () { stop(); start(); });
     return {
-      layout: layout, start: start, focus: focus, perform: perform,
-      enter: function () { active = true; sync(); },
+      layout: layout, start: start, focus: focus, perform: perform, refresh: refresh,
+      states: function () { return residents.map(function (resident) { return { id: resident.cat.id, activity: activity(resident) }; }); },
+      enter: function () { active = true; sync(); refresh(); },
       leave: function () { active = false; stop(); },
       contains: function (target) { return residents.some(function (r) { return r.el.contains(target); }); }
     };

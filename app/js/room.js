@@ -14,12 +14,20 @@
   var ROOM_WIDTH_SCALE = 0.5;
   var active = false, current = 0, position = 0, worldWidth = 0;
   var frame = 0, motion = 0, dragging = null;
+  var storage = null;
+  try { storage = root.localStorage; } catch (error) {}
+  var travel = root.TurtleCatTravel.create({ storage: storage, collection: root.TurtleCatCollection.get() });
+  travel.tick();
   var residents = root.TurtleRoomResidents.create({
     world: world, viewport: viewport, background: background,
     footer: document.querySelector('.room__footer'),
     status: document.getElementById('room-cat-status'),
-    findButton: document.getElementById('btn-room-find-cat'), moveTo: moveTo
+    findButton: document.getElementById('btn-room-find-cat'), moveTo: moveTo, travel: travel
   });
+  function refreshLife() { travel.tick(); residents.refresh(); if (life) life.render(); }
+  var life = root.TurtleRoomLife.create({ travel: travel, residents: residents, refresh: refreshLife });
+  root.setInterval(refreshLife, 1000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshLife(); });
 
   function maxScroll() { return Math.max(0, worldWidth - viewport.clientWidth); }
   function clamp(value) { return Math.max(0, Math.min(maxScroll(), value)); }
@@ -143,17 +151,21 @@
   root.TurtleRoom = {
     focus: residents.focus,
     perform: residents.perform,
+    isAway: travel.isAway,
     enter: function () {
       active = true;
+      travel.tick();
       residents.enter();
       layout();
       if (!background.getAttribute('src')) loadImage();
       else if (background.complete && background.naturalWidth) loading.hidden = true;
       residents.start();
+      life.render();
     },
     leave: function () {
       if (active) renderPosition();
       active = false;
+      life.close();
       residents.leave();
       stopMotion();
       endDrag();

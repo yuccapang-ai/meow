@@ -26,7 +26,7 @@
     .screen.is-active { display: flex; }
   </style>
   <link rel="stylesheet" href="./css/game.css" />
-  <link rel="stylesheet" href="./css/room.css?v=pages-3" />
+  <link rel="stylesheet" href="./css/room.css?v=travel-1" />
 </head>
 <body>
 
@@ -109,7 +109,22 @@
         <p class="room__record">最高 <b id="best-score">0</b> · 累计 <b id="best-cats">0</b> 只</p>
       </div>
       <button class="room__collection" id="btn-collection" type="button"><span>猫咪收集 <b id="room-collection-count">1 / 9</b></span><span>查看解锁进度 →</span></button>
+      <button class="room__life-entry" id="btn-room-life" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="room-life-panel"><span>猫咪状态</span><span id="room-life-count">1 在家 · 0 旅游</span><span aria-hidden="true">→</span></button>
     </header>
+    <div class="room-life" id="room-life-panel" hidden>
+      <section class="room-life__sheet" role="dialog" aria-modal="true" aria-labelledby="room-life-title" aria-describedby="room-life-rule">
+        <header class="room-life__header"><div><p class="room-life__eyebrow">HOME &amp; LITTLE ADVENTURES</p><h2 id="room-life-title">猫猫都去哪儿了？</h2></div><button class="room-life__close" id="btn-room-life-close" type="button" aria-label="关闭猫咪状态">×</button></header>
+        <div class="room-life__scroll">
+          <p class="room-life__summary" id="room-life-summary"></p>
+          <p class="room-life__note" id="room-life-rule"></p>
+          <ul class="room-life__list" id="room-life-list"></ul>
+          <div class="room-life__section-title"><h3>旅行带回的小家具</h3><span id="room-life-gift-count">0 / 5 款</span></div>
+          <p class="room-life__note">每次回家带回 1–2 件，自动摆好。同款合并收藏，留出散步空间。靠近空闲猫爬架就会跳上去玩。</p>
+          <ul class="room-life__furniture" id="room-life-furniture"></ul>
+          <h3 class="room-life__journal-title">猫猫旅行手记</h3><ul class="room-life__journal" id="room-life-journal" aria-live="polite"></ul>
+        </div>
+      </section>
+    </div>
     <div class="room__loading" id="room-loading" role="status">
       <span id="room-loading-text">正在打开房间…</span>
       <button class="room__retry" id="btn-room-retry" type="button" hidden>重新加载</button>
@@ -419,10 +434,13 @@
 <script src="./js/fortune.js"></script>
 <script src="./js/leaderboard.js"></script>
 <script src="./js/cat-collection.js?v=pages-2"></script>
-<script src="./js/cat-actions.js?v=collection-1"></script>
-<script src="./js/room-residents.js?v=pages-5"></script>
-<script src="./js/room.js?v=pages-3"></script>
-<script src="./js/collection-view.js?v=pages-2"></script>
+<script src="./js/cat-actions.js?v=travel-1"></script>
+<script src="./js/cat-travel.js?v=travel-1"></script>
+<script src="./js/room-furniture.js?v=travel-1"></script>
+<script src="./js/room-residents.js?v=travel-1"></script>
+<script src="./js/room-life.js?v=travel-1"></script>
+<script src="./js/room.js?v=travel-1"></script>
+<script src="./js/collection-view.js?v=travel-1"></script>
 <script src="./js/app.js?v=collection-1"></script>
 </body>
 </html>

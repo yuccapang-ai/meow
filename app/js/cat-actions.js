@@ -20,7 +20,8 @@
     idle: [[0, 1]],
     sleep: [[8, 0.3], [9, 0.5], [10, 1.4], [11, 1.4], [10, 1.4], [11, 1.4], [10, 1.4], [11, 1.4]],
     wake: [[10, 0.2], [9, 0.3], [8, 0.4], [0, 0.2]],
-    special: [[12, 0.55], [13, 0.45], [14, 0.55], [13, 0.4], [14, 0.55], [15, 1.1], [12, 0.4]]
+    special: [[12, 0.55], [13, 0.45], [14, 0.55], [13, 0.4], [14, 0.55], [15, 1.1], [12, 0.4]],
+    jump: [[8, 0.12], [1, 0.12], [3, 0.16], [5, 0.16], [0, 0.12], [8, 0.12], [0, 0.1]]
   };
   function create(options) {
     options = options || {};
@@ -52,7 +53,7 @@
       action: function () { return name; },
       frame: function () { return frame; },
       finished: function () { return done; },
-      label: function () { return name === 'special' ? (options.specialLabel || '专属动作') : labels[name]; }
+      label: function () { return name === 'special' ? (options.specialLabel || '专属动作') : name === 'jump' ? '跳跃中' : labels[name]; }
     };
   }
   return { create: create };

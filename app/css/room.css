@@ -29,6 +29,79 @@
 .room-cat__fallback { display: block; width: 100%; height: 100%; }
 .room-cat__body[hidden], .room-cat__fallback[hidden] { display: none; }
 .room-cat[data-state="sleep"] .room-cat__shadow { left: 16%; width: 68%; }
+.room-tree {
+  position: absolute; top: 0; left: 0; pointer-events: none;
+  background-image: url('../assets/room/furniture/cat-trees-v1.png');
+  background-size: 300% 200%; background-repeat: no-repeat;
+}
+.room-cat[data-state="jump"] { pointer-events: none; }
+.room__life-entry {
+  display: flex; align-items: center; width: 100%; min-height: 36px; padding: 7px 12px; margin-top: 6px;
+  border: 1px solid #b8ad88; border-radius: 12px; background: #e8e6cd; color: var(--moss);
+  font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; pointer-events: auto;
+  -webkit-appearance: none; appearance: none;
+}
+.room__life-entry > span:first-child { margin-right: auto; }
+.room__life-entry > span:last-child { margin-left: 10px; }
+.room-life {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center; padding: 14px;
+  background: rgba(46,45,40,0.38);
+}
+.room-life[hidden] { display: none; }
+.room-life__sheet {
+  display: flex; flex-direction: column; width: 100%; max-width: 480px; max-height: 100%; min-height: 0;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 22px;
+  box-shadow: 0 8px 0 rgba(46,45,40,0.16); overflow: hidden;
+}
+.room-life__header { display: flex; align-items: center; justify-content: space-between; padding: 20px 18px 16px; border-bottom: 1px dashed #beb899; flex-shrink: 0; }
+.room-life__eyebrow { margin-bottom: 7px; font-size: 9px; letter-spacing: 1.7px; color: var(--moss); }
+.room-life__header h2 { font-size: 21px; letter-spacing: 1px; }
+.room-life__close {
+  flex-shrink: 0; width: 38px; height: 38px; margin-left: 10px; border: 1px solid var(--moss); border-radius: 50%;
+  background: var(--paper-2); color: var(--moss); font: inherit; font-size: 26px; cursor: pointer;
+}
+.room-life__scroll { overflow-y: auto; min-height: 0; padding: 16px 18px 20px; -webkit-overflow-scrolling: touch; }
+.room-life__summary { color: var(--moss); font-size: 16px; font-weight: 800; margin-bottom: 7px; }
+.room-life__note { color: #796c55; font-size: 11px; line-height: 1.8; }
+.room-life__list, .room-life__furniture, .room-life__journal { list-style: none; padding: 0; }
+.room-life__list { margin: 13px 0 20px; }
+.room-life__cat { display: flex; align-items: center; min-height: 70px; padding: 9px 0; border-bottom: 1px solid #e2d8bf; }
+.room-life__portrait { width: 48px; height: 48px; margin-right: 10px; flex-shrink: 0; object-fit: contain; }
+.room-life__body { min-width: 0; flex: 1; }
+.room-life__body h3 { font-size: 13px; margin-bottom: 5px; }
+.room-life__state { font-size: 11px; color: var(--moss); line-height: 1.5; font-variant-numeric: tabular-nums; }
+.room-life__cat[data-location="away"] .room-life__state { color: #a65433; }
+.room-life__cat[data-location="locked"] .room-life__portrait { opacity: 0.4; filter: saturate(0.2); }
+.room-life__cat[data-location="locked"] .room-life__state { color: #95876d; }
+.room-life__action {
+  min-width: 56px; min-height: 36px; padding: 6px 9px; margin-left: 7px; border: 1px solid var(--moss); border-radius: 10px;
+  background: #e5e8d4; color: var(--moss); font: inherit; font-size: 11px; font-weight: 800; cursor: pointer;
+}
+.room-life__cat[data-location="away"] .room-life__action { color: #fff8e9; background: var(--ember); border-color: #9d5239; }
+.room-life__action:disabled { border-color: #d8d0bc; background: transparent; color: #9a8d76; cursor: default; }
+.room-life__section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.room-life__section-title h3, .room-life__journal-title { font-size: 14px; }
+.room-life__section-title > span { font-size: 10px; color: var(--moss); }
+.room-life__furniture { display: flex; flex-wrap: wrap; margin: 10px -3px 20px; }
+.room-life__gift { width: calc(33.333% - 6px); margin: 3px; padding: 5px 3px 10px; border-radius: 12px; background: #eee4cd; border: 1px solid #d6c8a7; text-align: center; }
+.room-life__gift-picture { display: block; width: 76px; height: 76px; max-width: 100%; margin: 0 auto 5px; background-image: url('../assets/room/furniture/cat-trees-v1.png'); background-size: 300% 200%; }
+.room-life__gift > span + span { display: block; font-size: 10px; }
+.room-life__gift b { display: block; margin-top: 4px; font-size: 10px; color: var(--moss); }
+.room-life__gift[data-owned="false"] { opacity: 0.6; }
+.room-life__gift[data-owned="false"] .room-life__gift-picture { filter: saturate(0.25); }
+.room-life__journal { margin-top: 9px; color: #796c55; font-size: 11px; line-height: 1.8; }
+.room-life__journal li { padding: 6px 0; border-bottom: 1px dashed #d5cbae; }
+.room-life button:focus, .room__life-entry:focus { outline: 2px dashed var(--ember); outline-offset: -4px; }
+@media (max-height: 640px) {
+  .room__life-entry { min-height: 30px; padding-top: 4px; padding-bottom: 4px; }
+  .room-life { padding: 8px; }
+  .room-life__header { padding: 12px 14px; }
+}
+@media (max-height: 560px) {
+  .room__toolbar, .room__heading p { display: none; }
+  .room__collection { min-height: 30px; padding: 5px 10px; }
+}
 .room__header {
   position: absolute; top: 0; left: 0; right: 0;
   z-index: 2;

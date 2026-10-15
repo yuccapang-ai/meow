@@ -10,6 +10,8 @@
 - 每只猫分别累计 **50 只**后解锁专属动作。
 - 「猫咪收集」展示每只猫的进度，并可点选已解锁动作。
 - 收集进度保存在当前浏览器；对局结算累计，重播不重复计数。
+- 已入住猫咪各自随机出游 1–5 分钟，家里始终至少留 3 只；「猫咪状态」可查看倒计时、在家动作并召回。
+- 每次回家带回 1–2 件猫爬架，五款同画风家具自动摆放，同款合并收藏；猫咪靠近后会独占使用并跳上、跳下。
 
 九只猫各有散步、睡觉、专属动作三组逐帧动画，共 144 帧。专属动作包括吃甜甜圈、敲键盘、听歌打拍子、喝咖啡、拍照、煎蛋、举哑铃、画画和吹派对喇叭。
 
@@ -31,7 +33,9 @@ python tools/start-game.py
 node tools/engine.test.js
 node tools/cat-collection.test.js
 node tools/cat-actions.test.js
+node tools/cat-travel.test.js
 node tools/room-residents.test.js
+node tools/room-life.test.js
 node tools/audit-pages.mjs
 ```
 
