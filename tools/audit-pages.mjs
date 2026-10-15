@@ -33,7 +33,7 @@ for (const name of fs.readdirSync(path.join(root, 'css'))) {
 for (const name of fs.readdirSync(path.join(root, 'js'))) {
   if (name.endsWith('.js')) new Script(fs.readFileSync(path.join(root, 'js', name), 'utf8'), { filename: name });
 }
-for (const name of ['app.js', 'room.js', 'room-life.js', 'collection-view.js']) {
+for (const name of ['app.js', 'room.js', 'room-life.js', 'room-arrange.js', 'collection-view.js']) {
   const code = fs.readFileSync(path.join(root, 'js', name), 'utf8');
   for (const match of code.matchAll(/(?:\$|getElementById)\('([^']+)'\)/g)) assert.ok(ids.includes(match[1]), `Missing DOM node: ${match[1]}`);
 }

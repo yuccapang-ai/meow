@@ -6,7 +6,8 @@
     var collection = root.TurtleCatCollection.get(), residents = [], active = false;
     var selected = 'donut', raf = 0, lastTime = 0, width = 0, height = 0, size = 0;
     var clearanceX = 0, clearanceY = 0, layoutKey = '';
-    var travel = options.travel, furniture = root.TurtleRoomFurniture ? root.TurtleRoomFurniture.create(world) : null;
+    var travel = options.travel, arranging = false;
+    var furniture = root.TurtleRoomFurniture ? root.TurtleRoomFurniture.create(world, { save: function (id, position) { return travel && travel.placeFurniture(id, position); } }) : null;
     var bounds = { left: 0, right: 1, back: 0.6, front: 0.8 };
     var reduced = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : null;
     function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
@@ -14,6 +15,7 @@
     function away(resident) { return travel && travel.isAway(resident.cat.id); }
     function activity(resident) {
       if (away(resident)) return '旅游中';
+      if (travel && travel.isSleeping(resident.cat.id)) return '睡觉中';
       if (resident.jump) return resident.jump.down ? '跳下猫爬架' : '跳上猫爬架';
       if (resident.tree) return '猫爬架上打盹';
       return resident.player.action() === 'sleep' ? '睡觉中' : resident.player.label();
@@ -195,6 +197,7 @@
     function add(cat) {
       var el = document.createElement('button');
       el.className = 'room-cat'; el.type = 'button'; el.hidden = true;
+      el.disabled = arranging;
       el.setAttribute('data-cat-id', cat.id); el.setAttribute('data-state', 'idle');
       el.setAttribute('aria-label', '摸摸' + cat.name); el.title = '点击互动，睡着时可以叫醒';
       var shadow = document.createElement('span'); shadow.className = 'room-cat__shadow'; shadow.setAttribute('aria-hidden', 'true');
@@ -209,14 +212,18 @@
         player: root.TurtleCatActions.create({ profile: 'collection', specialLabel: cat.special }),
         x: 0, y: 0.65, goalX: 0, goalY: 0.65, direction: 1, rests: 0, wait: 0, stroll: 0,
         turn: residents.length % 2 ? -1 : 1, tree: null, jump: null, lift: 0, cooldown: 0, perch: 0, wasAway: false,
-        placed: false, ready: false, loading: false, failed: false, frame: -1 };
+        wasSleeping: false, placed: false, ready: false, loading: false, failed: false, frame: -1 };
       el.addEventListener('click', function () {
+        if (arranging) return;
         selected = cat.id;
         if (root.TurtleSound) root.TurtleSound.play('tap');
         if (!r.ready) { load(r); updateStatus(r); return; }
-        if (reduced && reduced.matches) { updateStatus(r); return; }
         if (r.tree) { jumpDown(r); return; }
-        if (r.player.action() === 'sleep') play(r, 'wake'); else rest(r);
+        if (r.player.action() === 'sleep') {
+          if (!travel || !travel.isSleeping(cat.id) || travel.wake(cat.id)) play(r, 'wake');
+          else updateStatus(r);
+        } else rest(r);
+        if (reduced && reduced.matches) { updateStatus(r); return; }
       });
       residents.push(r); load(r);
     }
@@ -231,9 +238,13 @@
       var returned = false;
       residents.forEach(function (resident) {
         var travelling = away(resident);
+        var sleeping = travel.isSleeping(resident.cat.id);
         if (travelling && !resident.wasAway) { releaseTree(resident); play(resident, 'idle'); }
         if (!travelling && resident.wasAway) { resident.placed = false; returned = true; }
+        if (sleeping && !resident.wasSleeping) { if (resident.tree) releaseTree(resident); play(resident, 'sleep'); }
+        if (!sleeping && resident.wasSleeping && resident.player.action() === 'sleep') play(resident, 'wake');
         resident.wasAway = travelling; resident.el.hidden = travelling || !active || !width;
+        resident.wasSleeping = sleeping;
         updateStatus(resident);
       });
       if (returned) layoutKey = '';
@@ -287,7 +298,7 @@
     }
     function tick(now) {
       raf = 0;
-      if (!active || document.hidden) { lastTime = 0; return; }
+      if (!active || arranging || document.hidden) { lastTime = 0; return; }
       var dt = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0; lastTime = now;
       residents.forEach(function (r) {
         if (!r.ready || !r.placed || away(r)) return;
@@ -304,7 +315,12 @@
         } else {
           r.player.update(dt, 0);
           if (r.player.finished()) {
-            if (r.player.action() === 'sleep') play(r, 'wake'); else destination(r);
+            if (r.player.action() === 'sleep') {
+              if (travel && travel.isSleeping(r.cat.id)) r.player.play('sleep'); else play(r, 'wake');
+            } else destination(r);
+          }
+          if (travel && travel.isSleeping(r.cat.id) && r.player.action() !== 'sleep') {
+            play(r, 'sleep');
           }
         }
         paint(r);
@@ -315,10 +331,11 @@
     function start() {
       if (!active || document.hidden || !width || !options.background.complete || !options.background.naturalWidth) return;
       residents.forEach(function (r) { r.el.hidden = !!away(r); });
+      if (arranging) return;
       if (reduced && reduced.matches) {
         var occupied = residents.some(function (resident) { return !!resident.tree; });
         if (occupied) { layoutKey = ''; layout(width, height, 1, 0); }
-        residents.forEach(function (r) { play(r, 'idle'); }); return;
+        residents.forEach(function (r) { play(r, travel && travel.isSleeping(r.cat.id) ? 'sleep' : 'idle'); }); return;
       }
       if (!raf && residents.some(function (r) { return r.ready; })) raf = requestAnimationFrame(tick);
     }
@@ -327,11 +344,22 @@
       if (away(r)) { selected = id; updateStatus(r); return false; }
       selected = id; updateStatus(r); options.moveTo(r.x * width - viewport.clientWidth / 2); return true;
     }
+    function wake(id) {
+      var r = find(id);
+      if (!r || away(r) || !travel || !travel.wake(id)) return false;
+      selected = id; play(r, 'wake'); start(); return true;
+    }
     function perform(id, action) {
+      if (arranging) return false;
       var r = find(id), p = collection.progress(id);
       if (!r || !p.home || ['walk', 'sleep', 'special', 'jump'].indexOf(action) < 0 || (action === 'special' && !p.special)) return false;
       if (away(r)) { focus(id); return false; }
       focus(id);
+      if (action === 'sleep') {
+        if (travel && travel.sleep && !travel.sleep(id)) return false;
+        play(r, 'sleep'); start(); return true;
+      }
+      if (travel && travel.isSleeping(id)) return false;
       if (reduced && reduced.matches) return true;
       if (r.tree) { jumpDown(r); return true; }
       if (action === 'jump') { r.cooldown = 0; return interact(r); }
@@ -347,8 +375,17 @@
     });
     document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); else start(); });
     if (reduced) reduced.addListener(function () { stop(); start(); });
+    function arrange(enabled) {
+      if (!furniture || arranging === enabled) return;
+      arranging = enabled; stop(); furniture.edit(enabled);
+      residents.forEach(function (resident) { resident.el.disabled = enabled; });
+      if (enabled) {
+        layoutKey = ''; layout(width, height, 1, 0);
+      } else start();
+    }
     return {
-      layout: layout, start: start, focus: focus, perform: perform, refresh: refresh,
+      layout: layout, start: start, focus: focus, wake: wake, perform: perform, refresh: refresh,
+      arrange: arrange, furniture: furniture,
       states: function () { return residents.map(function (resident) { return { id: resident.cat.id, activity: activity(resident) }; }); },
       enter: function () { active = true; sync(); refresh(); },
       leave: function () { active = false; stop(); },

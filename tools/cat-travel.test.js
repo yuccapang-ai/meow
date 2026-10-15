@@ -28,6 +28,8 @@ var firstId = trips[0].cat.id;
 assert.strictEqual(travel.recall('missing'), null);
 var recalled = travel.recall(firstId);
 assert.ok(recalled.recalled && recalled.gifts.length >= 1 && recalled.gifts.length <= 2);
+assert.ok(recalled.catnip >= 10 && recalled.catnip <= 50);
+assert.strictEqual(travel.catnip(), recalled.catnip);
 assert.strictEqual(travel.isAway(firstId), false);
 assert.strictEqual(travel.recall(firstId), null, 'double recall cannot grant another reward');
 var before = travel.furniture().reduce(function (sum, entry) { return sum + entry.count; }, 0);
@@ -38,12 +40,17 @@ var offline = travel.tick().filter(function (entry) { return entry.type === 'ret
 assert.strictEqual(offline.length, savedTripCount, 'offline trips finish once without replaying a day of travel');
 var after = travel.furniture().reduce(function (sum, entry) { return sum + entry.count; }, 0);
 assert.ok(after >= before + savedTripCount && after <= before + savedTripCount * 2);
+assert.ok(travel.catnip() >= recalled.catnip + savedTripCount * 10 && travel.catnip() <= recalled.catnip + savedTripCount * 50);
 assert.strictEqual(travel.tick().filter(function (entry) { return entry.type === 'return'; }).length, 0);
 assert.deepStrictEqual(create().furniture(), travel.furniture(), 'furniture collection survives reload');
+assert.strictEqual(create().catnip(), travel.catnip(), 'catnip survives reload');
 var seen = new Set();
 for (step = 0; step < 8640; step++) {
   now += 10000;
   travel.tick().forEach(function (event) { if (event.type === 'depart') seen.add(event.id); });
+  travel.list().forEach(function (entry) {
+    if (entry.sleeping && entry.energy > Travel.sleepThreshold) assert.strictEqual(travel.wake(entry.cat.id), true);
+  });
   var home = travel.list().filter(function (entry) { return entry.unlocked && !entry.travelling; });
   assert.ok(home.length >= 3, 'at least three cats remain home across a full simulated day');
 }
@@ -60,10 +67,14 @@ assert.doesNotThrow(function () { var session = create(); now += 90001; session.
     assert.strictEqual(entry.endsAt - entry.startedAt, edge ? 300000 : 60000);
   });
 });
-var corrupt = { version: 1, cats: {}, furniture: { leaf: -2, cloud: '10', nest: 1e20 }, journal: [{ text: '<script>hello</script>', time: now }] };
+var corrupt = { version: 1, cats: {}, furniture: { leaf: -2, cloud: '10', nest: 1e20 }, catnip: -5, journal: [{ text: '<script>hello</script>', time: now }] };
 Collection.catalog.forEach(function (cat) { corrupt.cats[cat.id] = { startedAt: now, endsAt: now + 120000, nextAt: now }; });
 var corruptSave = {}; corruptSave[Travel.storageKey] = JSON.stringify(corrupt); storage = memory(corruptSave);
 travel = create();
 assert.ok(travel.list().filter(function (entry) { return !entry.travelling; }).length >= 3, 'invalid all-away save is repaired');
 assert.ok(travel.furniture().every(function (entry) { return Number.isInteger(entry.count) && entry.count >= 0 && entry.count <= 1000000; }));
+var invalidCatnip = { version: 1, cats: {}, furniture: {}, catnip: -5 };
+Collection.catalog.forEach(function (cat) { invalidCatnip.cats[cat.id] = { startedAt: 0, endsAt: 0, nextAt: now }; });
+var invalidCatnipSave = {}; invalidCatnipSave[Travel.storageKey] = JSON.stringify(invalidCatnip); storage = memory(invalidCatnipSave);
+assert.strictEqual(create().catnip(), 0, 'invalid catnip save is ignored');
 console.log('PASS: independent 1–5 minute travel, three stay home, every cat travels, recall, exactly-once offline rewards, five furniture types, reload and corrupt/unavailable storage.');

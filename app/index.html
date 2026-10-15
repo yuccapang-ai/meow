@@ -26,7 +26,7 @@
     .screen.is-active { display: flex; }
   </style>
   <link rel="stylesheet" href="./css/game.css" />
-  <link rel="stylesheet" href="./css/room.css?v=travel-1" />
+  <link rel="stylesheet" href="./css/room.css?v=catnip-1" />
 </head>
 <body>
 
@@ -106,10 +106,18 @@
           <button class="room__tool" id="btn-skins" type="button">皮肤</button>
           <button class="room__tool" id="btn-rules" type="button">玩法说明</button>
         </nav>
+        <p class="room__catnip" aria-label="猫薄荷余额"><span aria-hidden="true">🌿</span> <b id="room-catnip">0</b></p>
         <p class="room__record">最高 <b id="best-score">0</b> · 累计 <b id="best-cats">0</b> 只</p>
       </div>
       <button class="room__collection" id="btn-collection" type="button"><span>猫咪收集 <b id="room-collection-count">1 / 9</b></span><span>查看解锁进度 →</span></button>
-      <button class="room__life-entry" id="btn-room-life" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="room-life-panel"><span>猫咪状态</span><span id="room-life-count">1 在家 · 0 旅游</span><span aria-hidden="true">→</span></button>
+      <div class="room__life-tools">
+        <button class="room__life-entry" id="btn-room-life" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="room-life-panel"><span>猫咪状态</span><span id="room-life-count">1 在家 · 0 旅游</span><span aria-hidden="true">→</span></button>
+        <button class="room__arrange-button" id="btn-room-arrange" type="button" aria-pressed="false" aria-controls="room-arrange-bar" disabled>布置家具</button>
+      </div>
+      <div class="room__arrange-bar" id="room-arrange-bar" hidden>
+        <p id="room-arrange-status" role="status">拖动家具摆放 · 靠近边缘移动视角</p>
+        <button id="btn-room-arrange-reset" type="button">恢复默认</button>
+      </div>
     </header>
     <div class="room-life" id="room-life-panel" hidden>
       <section class="room-life__sheet" role="dialog" aria-modal="true" aria-labelledby="room-life-title" aria-describedby="room-life-rule">
@@ -119,7 +127,7 @@
           <p class="room-life__note" id="room-life-rule"></p>
           <ul class="room-life__list" id="room-life-list"></ul>
           <div class="room-life__section-title"><h3>旅行带回的小家具</h3><span id="room-life-gift-count">0 / 5 款</span></div>
-          <p class="room-life__note">每次回家带回 1–2 件，自动摆好。同款合并收藏，留出散步空间。靠近空闲猫爬架就会跳上去玩。</p>
+          <p class="room-life__note">每次回家带回 1–2 件，同款合并收藏。回到房间点「布置家具」可自由拖动，位置自动保存。猫咪靠近空闲猫爬架就会跳上去玩。</p>
           <ul class="room-life__furniture" id="room-life-furniture"></ul>
           <h3 class="room-life__journal-title">猫猫旅行手记</h3><ul class="room-life__journal" id="room-life-journal" aria-live="polite"></ul>
         </div>
@@ -435,11 +443,12 @@
 <script src="./js/leaderboard.js"></script>
 <script src="./js/cat-collection.js?v=pages-2"></script>
 <script src="./js/cat-actions.js?v=travel-1"></script>
-<script src="./js/cat-travel.js?v=travel-1"></script>
-<script src="./js/room-furniture.js?v=travel-1"></script>
-<script src="./js/room-residents.js?v=travel-1"></script>
-<script src="./js/room-life.js?v=travel-1"></script>
-<script src="./js/room.js?v=travel-1"></script>
+<script src="./js/cat-travel.js?v=catnip-1"></script>
+<script src="./js/room-furniture.js?v=arrange-1"></script>
+<script src="./js/room-residents.js?v=arrange-1"></script>
+<script src="./js/room-life.js?v=arrange-1"></script>
+<script src="./js/room-arrange.js?v=arrange-1"></script>
+<script src="./js/room.js?v=catnip-1"></script>
 <script src="./js/collection-view.js?v=travel-1"></script>
 <script src="./js/app.js?v=collection-1"></script>
 </body>
