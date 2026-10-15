@@ -33,8 +33,8 @@ function actor(id) { return world.children.filter(function (el) { return el.getA
 function pose(el) { return el.children[1].children[0].getAttribute('data-frame'); }
 var atlases = {};
 Collection.catalog.forEach(function (cat) { atlases[cat.id] = JSON.parse(fs.readFileSync(require.resolve('../app/' + cat.atlas.replace('.webp', '.json')), 'utf8')); });
-// Check actual visible sprite rectangles, including facing and depth scaling,
-// independently of the movement controller's collision calculations.
+// Check actual sprite rectangles independently of the movement controller.
+// Small edge overlaps are allowed; cats must not stack on top of one another.
 function body(el) {
   var transform = el.style.transform.match(/translate3d\(([-\d.]+)px,([-\d.]+)px,0\) scale\(([-\d.]+)\)/);
   assert.ok(transform, 'cat has a finite rendered position');
@@ -51,8 +51,11 @@ function assertSeparated() {
     var a = body(el);
     visible.slice(index + 1).forEach(function (other) {
       var b = body(other);
-      assert.ok(a.right <= b.x || b.right <= a.x || a.bottom <= b.y || b.bottom <= a.y,
-        el.getAttribute('data-cat-id') + ' overlaps ' + other.getAttribute('data-cat-id') + ' at ' + now);
+      var overlap = Math.max(0, Math.min(a.right, b.right) - Math.max(a.x, b.x)) *
+        Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y));
+      var smaller = Math.min((a.right - a.x) * (a.bottom - a.y), (b.right - b.x) * (b.bottom - b.y));
+      assert.ok(overlap / smaller <= 0.25,
+        el.getAttribute('data-cat-id') + ' overlaps too much with ' + other.getAttribute('data-cat-id') + ' at ' + now + ': ' + overlap / smaller);
     });
   });
 }
@@ -107,6 +110,9 @@ room.focus('donut'); assert.ok(isFinite(camera), 'finding cats works in half-len
 // All nine cats share a shortened room for two minutes, including long frames.
 // Sleeping cats remain obstacles; no actor may jump when avoiding a neighbour.
 var movedCats = new Set(), waiting = false;
+var movingFrames = world.children.map(function () { return 0; });
+var travel = world.children.map(function () { return 0; });
+var extents = world.children.map(function () { return { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity }; });
 room.perform('donut', 'sleep');
 var sleepingPosition = donut.style.transform;
 for (i = 0; i < 7200; i++) {
@@ -118,14 +124,30 @@ for (i = 0; i < 7200; i++) {
   world.children.forEach(function (el, index) {
     var match = el.style.transform.match(/translate3d\(([-\d.]+)px,([-\d.]+)px/);
     var dx = Number(match[1]) - before[index].x, dy = Number(match[2]) - before[index].y;
+    var extent = extents[index];
+    extent.left = Math.min(extent.left, Number(match[1])); extent.right = Math.max(extent.right, Number(match[1]));
+    extent.top = Math.min(extent.top, Number(match[2])); extent.bottom = Math.max(extent.bottom, Number(match[2]));
     assert.ok(Math.sqrt(dx * dx + dy * dy) <= viewport.clientHeight * 0.065 * 0.05 + 0.02, 'avoiding cats never teleports them');
-    if (Math.abs(dx) + Math.abs(dy) > 0.01) movedCats.add(el.getAttribute('data-cat-id'));
+    if (Math.abs(dx) + Math.abs(dy) > 0.01) {
+      movedCats.add(el.getAttribute('data-cat-id'));
+      movingFrames[index]++;
+      travel[index] += Math.sqrt(dx * dx + dy * dy);
+    }
     if (el.getAttribute('data-state') === 'idle') waiting = true;
   });
   if (i < 240) assert.strictEqual(donut.style.transform, sleepingPosition, 'walkers do not push sleeping cats');
 }
 assert.strictEqual(movedCats.size, 9, 'every cat can still walk in a crowded room');
 assert.ok(waiting, 'crowded cats can stop and wait for a clear route');
+console.log('Crowded-room movement:', JSON.stringify(movingFrames.map(function (frames, index) {
+  return { cat: world.children[index].getAttribute('data-cat-id'), movingPercent: Math.round(frames / 7200 * 100), distance: Math.round(travel[index]) };
+})));
+movingFrames.forEach(function (frames, index) {
+  assert.ok(frames / 7200 >= 0.35, 'every cat should visibly walk for at least 35% of the crowded simulation');
+  var extent = extents[index], span = Math.max(extent.right - extent.left, extent.bottom - extent.top);
+  assert.ok(span >= parseFloat(world.children[index].style.width), 'walking must explore at least one body length rather than jitter in place');
+});
+assert.ok(movingFrames.reduce(function (sum, frames) { return sum + frames; }, 0) / (7200 * 9) >= 0.5, 'at least half of cat time should be spent moving');
 
 // Repacking on smaller screens must preserve all nine residents and safe spacing.
 [[320,480], [375,568], [390,844], [480,360], [375,667]].forEach(function (dimensions) {
@@ -152,4 +174,4 @@ window.TurtleCollectionView.render();
 assert.strictEqual(ids['collection-list'].children.length, 9);
 assert.ok(ids['collection-list'].children.every(function (card) { return card.children[1].children.every(function (button) { return button.disabled === false; }); }));
 assert.ok(ids['collection-summary'].textContent.indexOf('9 / 9') >= 0);
-console.log('PASS: nine cats avoid overlap, wait and keep walking; safe spawns/resizes, sleeping obstacles, no teleporting, distinct gait, unlocks, pause/resume and collection cards.');
+console.log('PASS: nine cats actively roam with limited edge overlap; safe spawns/resizes, sleeping obstacles, no teleporting or jitter, distinct gait, unlocks, pause/resume and collection cards.');

@@ -29,13 +29,13 @@
     function play(r, name) {
       if (name === 'special' && !collection.progress(r.cat.id).special) name = 'sleep';
       r.wait = 0;
+      if (name === 'sleep' || name === 'special') r.stroll = 0;
       r.player.play(name);
       r.el.setAttribute('data-state', name);
       r.el.setAttribute('aria-label', (name === 'sleep' ? '叫醒' : '摸摸') + r.cat.name);
       updateStatus(r); paint(r);
     }
-    // 检查整段路线与其他猫的可见身体包围盒，避免低帧率时一步穿过。
-    // 留白按全部动作的最大轮廓预留，睡觉或切换专属动作也不会挤到邻居。
+    // 只保护身体中心的空间，允许边缘轻微交叠；检查实际移动路段，防止穿身。
     function pathClear(r, x, y) {
       return residents.every(function (other) {
         if (other === r || !other.placed) return true;
@@ -59,26 +59,51 @@
     }
     function waitForSpace(r) {
       play(r, 'idle');
-      r.wait = 0.5 + Math.random() * 0.8;
+      r.wait = 0.15 + Math.random() * 0.2;
     }
     function destination(r) {
-      for (var attempt = 0; attempt < 24; attempt++) {
-        var direction = Math.random() < 0.4 ? -r.direction : r.direction;
-        var distance = viewport.clientWidth * (0.18 + Math.random() * 0.35) / width;
-        if (r.x + direction * distance < bounds.left || r.x + direction * distance > bounds.right) direction *= -1;
-        // 横向受阻时也尝试向前后让路；只选择当前没有猫挡住的路线。
-        var x = attempt >= 16 ? r.x : clamp(r.x + direction * distance, bounds.left, bounds.right);
-        var y = bounds.back + Math.random() * (bounds.front - bounds.back);
-        if (Math.abs(x - r.x) * width + Math.abs(y - r.y) * height < 8 || !pathClear(r, x, y)) continue;
-        r.goalX = x; r.goalY = y;
-        if (Math.abs(x - r.x) > 0.001) r.direction = x > r.x ? 1 : -1;
-        r.facing.style.transform = 'scaleX(' + r.direction + ')';
-        play(r, 'walk');
+      var direction = Math.random() < 0.25 ? -r.direction : r.direction;
+      var distance = viewport.clientWidth * (0.3 + Math.random() * 0.35) / width;
+      if (r.x + direction * distance < bounds.left || r.x + direction * distance > bounds.right) direction *= -1;
+      r.goalX = clamp(r.x + direction * distance, bounds.left, bounds.right);
+      r.goalY = bounds.back + Math.random() * (bounds.front - bounds.back);
+      if (r.stroll <= 0) r.stroll = 12 + Math.random() * 8;
+      if (r.player.action() !== 'walk') play(r, 'walk');
+    }
+    function walkStep(r, dt) {
+      if (!dt) return;
+      var dx = (r.goalX - r.x) * width, dy = (r.goalY - r.y) * height;
+      var distance = Math.sqrt(dx * dx + dy * dy), step = Math.min(distance, height * 0.065 * dt);
+      if (distance < 1) { destination(r); return; }
+      var heading = Math.atan2(dy, dx), turn = r.turn;
+      var angles = [0, turn * 0.5, -turn * 0.5, turn, -turn, turn * 1.57, -turn * 1.57, Math.PI];
+      for (var i = 0; i < angles.length; i++) {
+        var angle = heading + angles[i];
+        var x = clamp(r.x + Math.cos(angle) * step / width, bounds.left, bounds.right);
+        var y = clamp(r.y + Math.sin(angle) * step / height, bounds.back, bounds.front);
+        var movedX = (x - r.x) * width, movedY = (y - r.y) * height;
+        var moved = Math.sqrt(movedX * movedX + movedY * movedY);
+        if (moved < step * 0.5 || !pathClear(r, x, y)) continue;
+        r.x = x; r.y = y;
+        r.player.update(dt, moved / size);
+        r.stroll -= dt;
+        if (Math.abs(movedX) > step * 0.25) {
+          r.direction = movedX > 0 ? 1 : -1;
+          r.facing.style.transform = 'scaleX(' + r.direction + ')';
+        }
+        // 绕开后沿新方向走一段，避免每帧又转回来顶住同一只猫。
+        if (i > 0) {
+          r.goalX = clamp(r.x + Math.cos(angle) * size * 1.5 / width, bounds.left, bounds.right);
+          r.goalY = clamp(r.y + Math.sin(angle) * size * 1.5 / height, bounds.back, bounds.front);
+        }
+        if (r.stroll <= 0) rest(r);
+        else if (distance <= step && i === 0) destination(r);
         return;
       }
       waitForSpace(r);
     }
     function rest(r) {
+      r.stroll = 0;
       r.rests++;
       play(r, collection.progress(r.cat.id).special && r.rests % 2 === 1 ? 'special' : 'sleep');
     }
@@ -107,7 +132,8 @@
       facing.appendChild(sprite); facing.appendChild(fallback); el.appendChild(shadow); el.appendChild(facing); world.appendChild(el);
       var r = { cat: cat, el: el, facing: facing, sprite: sprite, fallback: fallback, image: new Image(),
         player: root.TurtleCatActions.create({ profile: 'collection', specialLabel: cat.special }),
-        x: 0, y: 0.65, goalX: 0, goalY: 0.65, direction: 1, rests: 0, wait: 0,
+        x: 0, y: 0.65, goalX: 0, goalY: 0.65, direction: 1, rests: 0, wait: 0, stroll: 0,
+        turn: residents.length % 2 ? -1 : 1,
         placed: false, ready: false, loading: false, failed: false, frame: -1 };
       el.addEventListener('click', function () {
         selected = cat.id;
@@ -134,18 +160,19 @@
       // 入住和窗口缩放时先预留不相交的落点。猫多时利用前后两排地板；
       // 极小窗口放不下时才适当缩小角色，房间仍保持既定尺寸。
       do {
-        clearanceX = size + 6; clearanceY = size * 0.9 + 6;
+        clearanceX = size * 0.8 + 2; clearanceY = size * 0.7 + 2;
         bounds.left = (size * 0.6 + 12) / width; bounds.right = 1 - bounds.left;
-        columns = Math.max(1, Math.floor((bounds.right - bounds.left) * width / (clearanceX + 2)) + 1);
+        columns = Math.max(1, Math.floor((bounds.right - bounds.left) * width / (size + 8)) + 1);
         rows = Math.max(1, Math.ceil(residents.length / columns));
-        bounds.back = Math.min(0.61, bounds.front - Math.max(height * 0.06, (rows - 1) * (clearanceY + 2) + (rows > 1 ? height * 0.02 : 0)) / height);
+        bounds.back = Math.min(0.56, bounds.front - Math.max(height * 0.1, (rows - 1) * (size * 0.9 + 8) + (rows > 1 ? height * 0.02 : 0)) / height);
         if (bounds.back >= 0.44 && bounds.left < bounds.right) break;
         size *= 0.9;
       } while (size > 8);
       var slots = [];
       for (var row = 0; row < rows; row++) {
-        for (var column = 0; column < columns; column++) {
-          slots.push({ x: columns === 1 ? 0.5 : bounds.left + column * (bounds.right - bounds.left) / (columns - 1),
+        var count = Math.max(1, Math.ceil((residents.length - row) / rows));
+        for (var column = 0; column < count; column++) {
+          slots.push({ x: count === 1 ? clamp((viewport.scrollLeft + viewport.clientWidth * 0.45) / width, bounds.left, bounds.right) : bounds.left + column * (bounds.right - bounds.left) / (count - 1),
             y: rows === 1 ? (bounds.back + bounds.front) / 2 : bounds.back + row * (bounds.front - bounds.back) / (rows - 1) });
         }
       }
@@ -171,18 +198,7 @@
       residents.forEach(function (r) {
         if (!r.ready || !r.placed) return;
         if (r.player.action() === 'walk') {
-          var dx = (r.goalX - r.x) * width, dy = (r.goalY - r.y) * height;
-          var distance = Math.sqrt(dx * dx + dy * dy), step = height * 0.065 * dt;
-          var moved = Math.min(distance, step);
-          var nextX = distance ? r.x + dx / distance * moved / width : r.x;
-          var nextY = distance ? r.y + dy / distance * moved / height : r.y;
-          // 逐猫提交安全位置，后来移动的猫也能看到本帧的新位置。
-          if (!pathClear(r, nextX, nextY)) waitForSpace(r);
-          else {
-            r.x = nextX; r.y = nextY;
-            r.player.update(dt, moved / size);
-            if (distance <= step) rest(r);
-          }
+          walkStep(r, dt);
         } else if (r.wait > 0) {
           r.wait = Math.max(0, r.wait - dt);
           if (!r.wait) destination(r);
