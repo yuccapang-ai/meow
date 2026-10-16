@@ -17,9 +17,9 @@ assert.strictEqual(travel.list().filter(function (entry) { return entry.travelli
 collection.recordRun('cats', [0,0,0,30,30,30,30,30,630], 'nine');
 travel.tick(); now += 90001;
 var departures = travel.tick();
-assert.strictEqual(departures.length, 6);
+assert.strictEqual(departures.length, 7);
 var trips = travel.list().filter(function (entry) { return entry.travelling; });
-assert.strictEqual(trips.length, 6);
+assert.strictEqual(trips.length, 7);
 trips.forEach(function (entry) { assert.ok(entry.endsAt - entry.startedAt >= 60000 && entry.endsAt - entry.startedAt <= 300000); });
 assert.ok(new Set(trips.map(function (entry) { return entry.endsAt; })).size > 1, 'cats independently draw trip duration');
 var reloaded = create();
@@ -54,7 +54,7 @@ for (step = 0; step < 8640; step++) {
   var home = travel.list().filter(function (entry) { return entry.unlocked && !entry.travelling; });
   assert.ok(home.length >= 3, 'at least three cats remain home across a full simulated day');
 }
-assert.strictEqual(seen.size, 9, 'every cat gets a turn to travel');
+assert.strictEqual(seen.size, 10, 'every unlocked cat across both series gets a turn to travel');
 assert.strictEqual(travel.furniture().filter(function (entry) { return entry.count; }).length, 5);
 assert.ok(travel.journal().length <= 8, 'journal stays bounded');
 var broken = {}; broken[Travel.storageKey] = '{broken'; storage = memory(broken);
@@ -78,3 +78,11 @@ Collection.catalog.forEach(function (cat) { invalidCatnip.cats[cat.id] = { start
 var invalidCatnipSave = {}; invalidCatnipSave[Travel.storageKey] = JSON.stringify(invalidCatnip); storage = memory(invalidCatnipSave);
 assert.strictEqual(create().catnip(), 0, 'invalid catnip save is ignored');
 console.log('PASS: independent 1–5 minute travel, three stay home, every cat travels, recall, exactly-once offline rewards, five furniture types, reload and corrupt/unavailable storage.');
+var fullCollection = Collection.create(null);
+Collection.series.forEach(function (series) { fullCollection.recordRun(series.id, Array(9).fill(100), 'full-' + series.id); });
+var fullTravel = Travel.create({ collection: fullCollection, storage: null, now: function () { return now; }, random: random });
+now += 90001; fullTravel.tick();
+assert.strictEqual(fullTravel.list().filter(function (entry) { return entry.travelling; }).length, 15);
+assert.strictEqual(fullTravel.list().filter(function (entry) { return entry.unlocked && !entry.travelling; }).length, 3);
+assert.ok(fullTravel.list().some(function (entry) { return entry.cat.skin === 'tortie' && entry.travelling; }));
+console.log('PASS: eighteen residents share the global three-at-home limit.');

@@ -1,0 +1,146 @@
+{
+  "image": "garden-actions-v2.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "浇小花",
+  "frames": [
+    {
+      "index": 0,
+      "left": 24,
+      "top": 50,
+      "width": 209,
+      "height": 182
+    },
+    {
+      "index": 1,
+      "left": 22,
+      "top": 52,
+      "width": 208,
+      "height": 180
+    },
+    {
+      "index": 2,
+      "left": 25,
+      "top": 52,
+      "width": 206,
+      "height": 180
+    },
+    {
+      "index": 3,
+      "left": 25,
+      "top": 52,
+      "width": 203,
+      "height": 180
+    },
+    {
+      "index": 4,
+      "left": 25,
+      "top": 50,
+      "width": 208,
+      "height": 182
+    },
+    {
+      "index": 5,
+      "left": 22,
+      "top": 50,
+      "width": 209,
+      "height": 182
+    },
+    {
+      "index": 6,
+      "left": 23,
+      "top": 52,
+      "width": 206,
+      "height": 180
+    },
+    {
+      "index": 7,
+      "left": 31,
+      "top": 49,
+      "width": 200,
+      "height": 183
+    },
+    {
+      "index": 8,
+      "left": 18,
+      "top": 88,
+      "width": 212,
+      "height": 144
+    },
+    {
+      "index": 9,
+      "left": 23,
+      "top": 107,
+      "width": 207,
+      "height": 125
+    },
+    {
+      "index": 10,
+      "left": 27,
+      "top": 98,
+      "width": 201,
+      "height": 134
+    },
+    {
+      "index": 11,
+      "left": 24,
+      "top": 100,
+      "width": 205,
+      "height": 132
+    },
+    {
+      "index": 12,
+      "left": 21,
+      "top": 22,
+      "width": 207,
+      "height": 210
+    },
+    {
+      "index": 13,
+      "left": 24,
+      "top": 16,
+      "width": 202,
+      "height": 216
+    },
+    {
+      "index": 14,
+      "left": 33,
+      "top": 17,
+      "width": 209,
+      "height": 215
+    },
+    {
+      "index": 15,
+      "left": 23,
+      "top": 18,
+      "width": 206,
+      "height": 214
+    }
+  ]
+}

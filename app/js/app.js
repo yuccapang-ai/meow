@@ -873,6 +873,7 @@
     var ms = document.querySelectorAll('.home__mascot');
     for (var i = 0; i < ms.length; i++) Skin.paint(ms[i], parseInt(ms[i].getAttribute('data-item'), 10));
     $('btn-skins').textContent = '皮肤';
+    $('room-play-label').textContent = Skin.get().name + ' · 玩对对碰，收集猫咪';
     $('lucky-title').textContent = '选一只幸运' + Skin.get().noun;
   }
 
@@ -888,6 +889,7 @@
       item.type = 'button';
       item.className = 'skin-item' + (s === cur ? ' is-active' : '') + (locked ? ' is-locked' : '');
       item.setAttribute('data-skin', s.id);
+      item.setAttribute('aria-pressed', String(s === cur));
       if (locked) item.setAttribute('aria-disabled', 'true');
       var previews = document.createElement('div');
       previews.className = 'skin-item__previews';
@@ -911,7 +913,7 @@
       meta.className = 'skin-item__meta';
       meta.textContent = locked
         ? '单局 ' + s.unlock + ' 只解锁 · 历史最高 ' + best.score
-        : s.items[0].name + '、' + s.items[1].name + '、' + s.items[2].name + ' 等 9 款';
+        : (!s.unlock ? '直接可选 · ' : '') + s.items[0].name + '、' + s.items[1].name + '、' + s.items[2].name + ' 等 9 款';
       text.appendChild(name);
       text.appendChild(meta);
       item.appendChild(previews);
@@ -1220,7 +1222,7 @@
     CollectionView.milestones(milestones);
     $('result-collection-text').textContent = milestones.length
       ? '解锁 ' + milestones.length + ' 项新内容 · 去看看'
-      : (runRecord.skin === 'cats' ? '本局收集 +' + t.total + ' · 查看进度' : '查看摸鱼猫收集进度');
+      : (Collection.list(runRecord.skin).length ? '本局收集 +' + t.total + ' · 查看进度' : '查看猫咪系列收集进度');
     // 结算主题由 Top1 款式决定（持有最多的那一款）；没有任何棋子时退回幸运款
     var themeIdx = (t.top && t.top.length) ? t.top[0].color : state.lucky;
     var fortuneLine = Skin.fortune(themeIdx)[fortune.tier];
@@ -1404,14 +1406,18 @@
   /* ---------- 事件绑定 ---------- */
   function collectCats() {
     if (Wipe.isActive()) return;
-    Skin.set('cats'); paintMascots(); openLuckyPicker();
+    paintMascots(); openLuckyPicker();
   }
-  function openCollection() {
+  function openCollection(skin) {
     if (Wipe.isActive()) return;
+    CollectionView.selectSeries(typeof skin === 'string' ? skin : Skin.get().id);
     Sound.play('open'); showScreen('collection'); $('collection-title').focus();
   }
   $('btn-start').addEventListener('click', collectCats);
-  $('btn-collection-play').addEventListener('click', collectCats);
+  $('btn-collection-play').addEventListener('click', function () {
+    if (Wipe.isActive()) return;
+    Skin.set(CollectionView.selectedSeries()); collectCats();
+  });
   $('btn-collection').addEventListener('click', openCollection);
   $('btn-collection-home').addEventListener('click', function () { Sound.play('close'); showScreen('room'); $('btn-collection').focus(); });
   $('screen-collection').addEventListener('keydown', function (event) {
@@ -1423,7 +1429,7 @@
   });
   $('btn-result-collection').addEventListener('click', function () {
     if (Wipe.isActive()) return;
-    goHome(); openCollection();
+    goHome(); openCollection(lastRecord && lastRecord.skin);
   });
   $('collection-list').addEventListener('click', function (event) {
     var button = event.target;

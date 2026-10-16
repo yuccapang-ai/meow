@@ -1,0 +1,74 @@
+[
+  {
+    "id": "strawberry",
+    "name": "草莓猫",
+    "special": "吃草莓",
+    "fx": "donut",
+    "color": "#e87891",
+    "word": "啊呜"
+  },
+  {
+    "id": "sailor",
+    "name": "水手猫",
+    "special": "挥爪打招呼",
+    "fx": "rain",
+    "color": "#4a89b9",
+    "word": "嗨喵"
+  },
+  {
+    "id": "wizard",
+    "name": "星星猫",
+    "special": "挥动星星棒",
+    "fx": "party",
+    "color": "#9677b4",
+    "word": "叮"
+  },
+  {
+    "id": "garden",
+    "name": "园丁猫",
+    "special": "浇小花",
+    "fx": "carrot",
+    "color": "#7f9b72",
+    "word": "长大"
+  },
+  {
+    "id": "baker",
+    "name": "面包猫",
+    "special": "揉小面团",
+    "fx": "chef",
+    "color": "#c79b60",
+    "word": "揉揉"
+  },
+  {
+    "id": "detective",
+    "name": "侦探猫",
+    "special": "举放大镜",
+    "fx": "peek",
+    "color": "#9c8872",
+    "word": "发现"
+  },
+  {
+    "id": "postman",
+    "name": "邮差猫",
+    "special": "送出小信封",
+    "fx": "heart",
+    "color": "#4c9898",
+    "word": "给你"
+  },
+  {
+    "id": "cozy",
+    "name": "抱抱猫",
+    "special": "抱小鱼玩偶",
+    "fx": "blanket",
+    "color": "#d99c9b",
+    "word": "抱抱"
+  },
+  {
+    "id": "explorer",
+    "name": "探险猫",
+    "special": "展开小地图",
+    "fx": "book",
+    "color": "#c88651",
+    "word": "出发"
+  }
+]

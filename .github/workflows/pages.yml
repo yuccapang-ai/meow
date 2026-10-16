@@ -26,9 +26,14 @@ jobs:
           node-version: 20
       - run: node tools/engine.test.js
       - run: node tools/cat-collection.test.js
+      - run: node tools/series-ui.test.js
       - run: node tools/cat-actions.test.js
       - run: node tools/cat-travel.test.js
+      - run: node tools/cat-energy.test.js
       - run: node tools/room-residents.test.js
+      - run: node tools/room-residents.test.js
+        env:
+          ROOM_TEST_SERIES: all
       - run: node tools/room-life.test.js
       - run: node tools/room-arrange.test.js
       - run: node tools/audit-pages.mjs

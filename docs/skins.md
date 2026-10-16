@@ -8,10 +8,13 @@
 | --- | --- | --- | --- |
 | `turtle` | 经典乌龟（测试套系，不开放给玩家；URL 带 `?skins=all` 才出现在列表，`?skins=player` 恢复） | svg | `index.html` 内的 `#t-turtle` symbol + 9 个颜色 |
 | `cats` | 摸鱼猫（默认开放） | image | `app/skins/cats/1.webp` … `9.webp`（源文件在 `myasset/cat_1..9.png`） |
+| `tortie` | 灰玳瑁猫（默认开放，无分数门槛） | image | `app/skins/tortie/1.webp` … `9.webp`；深灰玳瑁毛色，九款配饰，完整三组动作见 `myasset/tortie-v2/README.md` |
 | `pengci` | 碰瓷猫（单局历史最高 60 只解锁） | image | `app/skins/pengci/1.webp` … `9.webp`（源文件在 `myasset/cat2nd_1..9.png`）。九款各有专属 fx（carrot / flat / peek / box / cool / boba / cart / heart / rain），消除动作统一先「哎哟」歪倒一下（碰瓷梗）再接各自动作 |
 | `weekend` | 卷卷猫（单局历史最高 80 只解锁） | image | `app/skins/weekend/1.webp` … `9.webp`（源文件在 `myasset/cat3rd_1..9.png`）。九款专属 fx（burger / blanket / movie / selfie / bath / shop / refill / book / drive），消除动作统一先「伸个懒腰」再接各自动作 |
 
 默认套系 `cats`，玩家在首页「皮肤」里切换，选择存 `localStorage`（键 `ttddp.skin.v1`）。
+
+「去养猫」保留当前所选皮肤；收集页的「去收集猫咪」使用当前系列页签。摸鱼猫和灰玳瑁猫皮肤均直接开放，但房间中的猫本体、入住和专属动作仍需收集解锁，两系列采用相同门槛并独立累计，详见 `cat-room.md`。旧套系的分数门槛不变。
 
 ## 解锁
 

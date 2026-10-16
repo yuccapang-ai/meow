@@ -1,0 +1,92 @@
+[
+  {
+    "id": "strawberry",
+    "name": "草莓猫",
+    "special": "吃草莓",
+    "fx": "donut",
+    "color": "#e87891",
+    "word": "啊呜",
+    "look": "A dusty strawberry-pink triangular neckerchief with two tiny cream dots and a small strawberry-shaped cloth hair clip beside one ear. Keep the eyes, face and body exposed.",
+    "act": "Seated front three-quarter view: frame 12 holds one ripe red strawberry low in both forepaws and looks at it; frame 13 raises it to mouth with small open mouth; frame 14 bites a little piece off it; frame 15 lowers the bitten strawberry and smiles with closed eyes."
+  },
+  {
+    "id": "sailor",
+    "name": "水手猫",
+    "special": "挥爪打招呼",
+    "fx": "rain",
+    "color": "#4a89b9",
+    "word": "嗨喵",
+    "look": "A small cream sailor cap with a muted blue band between the ears, and a navy-and-cream striped sailor collar with a tiny blue tie. Face and chunky gray body remain exposed.",
+    "act": "Seated front three-quarter view: frame 12 rests both forepaws low; frame 13 lifts the near paw next to the cheek; frame 14 extends that paw outward in a friendly wave with visible pads; frame 15 brings it back inward and smiles. The other paw and rump stay planted."
+  },
+  {
+    "id": "wizard",
+    "name": "星星猫",
+    "special": "挥动星星棒",
+    "fx": "party",
+    "color": "#9677b4",
+    "word": "叮",
+    "look": "A soft lavender small floppy pointed wizard hat decorated with a cream crescent, and a short lavender shoulder cape tied with a cream star button. Both ears are visible, all face markings and green eyes stay exposed.",
+    "act": "Seated front three-quarter view: frame 12 holds a short wooden wand with a solid yellow star tip low; frame 13 raises the wand diagonally; frame 14 gently sweeps it to the right; frame 15 brings it back to the chest and smiles. No floating sparkles or effects; the star is a physical wand tip."
+  },
+  {
+    "id": "garden",
+    "name": "园丁猫",
+    "special": "浇小花",
+    "fx": "carrot",
+    "color": "#7f9b72",
+    "word": "长大",
+    "look": "A soft sage-green short gardening apron with a cream pocket, and one small straw sunhat with a muted green band tilted between the ears. Keep the gray-and-apricot face, legs and tail visible.",
+    "act": "Seated front three-quarter view: a single tiny terracotta pot with one yellow flower stays beside the forepaws in all four frames. Frame 12 holds a small sage watering can low; frame 13 lifts the can; frame 14 tilts it above the flower with two opaque blue water drops; frame 15 brings the can upright and smiles. Keep pot and body baseline fixed."
+  },
+  {
+    "id": "baker",
+    "name": "面包猫",
+    "special": "揉小面团",
+    "fx": "chef",
+    "color": "#c79b60",
+    "word": "揉揉",
+    "look": "A little warm-cream baker cap with a caramel band and a short pale apricot apron with a tiny wheat motif. The original gray tortoiseshell head, chunky body and striped tail remain recognizable.",
+    "act": "Seated front three-quarter view: one small light wooden kneading board and one cream dough ball rest directly in front at ground level. Frame 12 both forepaws hover over the dough; frame 13 presses it down; frame 14 folds it with bent forelegs; frame 15 lifts paws slightly and smiles at the round dough. Four visibly different paw and dough poses."
+  },
+  {
+    "id": "detective",
+    "name": "侦探猫",
+    "special": "举放大镜",
+    "fx": "peek",
+    "color": "#9c8872",
+    "word": "发现",
+    "look": "A tiny oatmeal brown deerstalker detective cap and short tan cape with a dark cocoa button. Both ears peek out, no face covering. Green eyes and asymmetrical apricot brow patch stay visible.",
+    "act": "Seated front three-quarter view: frame 12 holds a small cocoa-handled round magnifying glass beside its chest; frame 13 raises it toward one eye; frame 14 leans forward peering through the glass with one visible enlarged green eye; frame 15 lowers the glass and perks up. The lens is a simple pale flat blue tint, no photorealistic refraction."
+  },
+  {
+    "id": "postman",
+    "name": "邮差猫",
+    "special": "送出小信封",
+    "fx": "heart",
+    "color": "#4c9898",
+    "word": "给你",
+    "look": "A small muted teal postman's cap with a tiny cream envelope badge and a caramel crossbody mail satchel. Keep straps simple, both ears showing, original gray fur and peach markings exposed.",
+    "act": "Seated front three-quarter view: frame 12 looks down at the satchel; frame 13 pulls out a cream envelope with one small pink heart seal; frame 14 extends it forward in both forepaws; frame 15 hugs the envelope to its chest with smiling eyes. The satchel stays attached in every frame."
+  },
+  {
+    "id": "cozy",
+    "name": "抱抱猫",
+    "special": "抱小鱼玩偶",
+    "fx": "blanket",
+    "color": "#d99c9b",
+    "word": "抱抱",
+    "look": "A tiny dusty peach sleeping cap with a soft cream pompom and a matching small peach neck scarf with one cream stripe. Do not cover or change the cat's face markings.",
+    "act": "Seated front three-quarter view: frame 12 holds a small pale blue fish-shaped fabric plush low; frame 13 lifts the plush to its cheek; frame 14 hugs it with both forepaws and closes eyes; frame 15 rests its cheek on the plush, smiling. The fish is a toy with a stitched eye, no second animal."
+  },
+  {
+    "id": "explorer",
+    "name": "探险猫",
+    "special": "展开小地图",
+    "fx": "book",
+    "color": "#c88651",
+    "word": "出发",
+    "look": "A burnt-orange small neckerchief, a miniature khaki canvas backpack, and simple round aviator-style goggles resting on the forehead above the ears, never covering the green eyes. No footwear.",
+    "act": "Seated front three-quarter view: frame 12 holds a folded cream paper map low; frame 13 opens the map with both paws; frame 14 studies it with a curious head tilt; frame 15 points one paw to a small red X on the open map. Map has only a few simple colored paths, no lettering."
+  }
+]

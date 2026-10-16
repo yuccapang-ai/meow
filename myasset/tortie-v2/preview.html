@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>灰玳瑁小猫 · 九款动作预览</title>
+<style>
+:root{color-scheme:light;font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#44372f;background:#f4e7cc}
+*{box-sizing:border-box}body{margin:0;padding:40px 22px 64px}main{max-width:960px;margin:auto}header{margin-bottom:24px}.eyebrow{font-size:12px;letter-spacing:3px;color:#7f7265}h1{font-size:30px;margin:10px 0}header p{font-size:14px;color:#766a5e;line-height:1.8;margin:0}nav{display:flex;gap:9px;flex-wrap:wrap;margin:24px 0}button,a{font:inherit}button{border:1px solid #c7b697;border-radius:999px;padding:10px 22px;background:#fff8e9;color:#67503d;cursor:pointer}button[aria-pressed="true"]{background:#5b4739;color:#fff8e9;border-color:#5b4739}button:focus-visible,a:focus-visible{outline:3px solid #5c8692;outline-offset:3px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.card{background:#fff9ed;border:1px solid #e1d0b0;border-radius:18px;overflow:hidden}.stage{display:grid;place-items:center;aspect-ratio:1;background:#f4e7cc}.stage img{width:100%;height:auto;max-width:280px}.caption{padding:14px 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}.number{font-size:11px;color:#9b8a72}h2{font-size:16px;margin:0}.action-label{font-size:12px;color:#84735e;margin-left:auto}footer{margin-top:30px;font-size:13px;color:#7b6d5d;line-height:2}a{color:#69503a}#reduced-note{background:#fff9ed;border-radius:10px;padding:10px 14px;font-size:13px}button[hidden]{display:none}@media(max-width:620px){body{padding:24px 12px 40px}.grid{gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}h1{font-size:24px}.caption{padding:10px;gap:6px}h2{font-size:14px}.action-label{width:100%;margin:0 0 0 22px}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">TORTIE COLLECTION · 09</div><h1>灰玳瑁小猫 · 动作预览</h1><p>沿用已确认的深灰毛色与九款装扮。切换动作，同时查看九只小猫。</p></header>
+<nav aria-label="动作选择"><button type="button" data-action="walk" aria-pressed="true">散步</button><button type="button" data-action="sleep" aria-pressed="false">睡觉</button><button type="button" data-action="special" aria-pressed="false">专属动作</button><button type="button" id="toggle-motion" aria-pressed="false">暂停动画</button></nav>
+<p id="reduced-note" hidden>已按系统设置暂停动画；可点击「播放动画」观看。</p>
+<section class="grid" aria-label="九款猫咪动作">
+    <article class="card"><div class="stage"><img src="strawberry-walk.webp" width="256" height="256" alt="草莓猫散步动画" data-cat="strawberry" data-name="草莓猫" data-special="吃草莓"></div><div class="caption"><span class="number">01</span><h2>草莓猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="sailor-walk.webp" width="256" height="256" alt="水手猫散步动画" data-cat="sailor" data-name="水手猫" data-special="挥爪打招呼"></div><div class="caption"><span class="number">02</span><h2>水手猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="wizard-walk.webp" width="256" height="256" alt="星星猫散步动画" data-cat="wizard" data-name="星星猫" data-special="挥动星星棒"></div><div class="caption"><span class="number">03</span><h2>星星猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="garden-walk.webp" width="256" height="256" alt="园丁猫散步动画" data-cat="garden" data-name="园丁猫" data-special="浇小花"></div><div class="caption"><span class="number">04</span><h2>园丁猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="baker-walk.webp" width="256" height="256" alt="面包猫散步动画" data-cat="baker" data-name="面包猫" data-special="揉小面团"></div><div class="caption"><span class="number">05</span><h2>面包猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="detective-walk.webp" width="256" height="256" alt="侦探猫散步动画" data-cat="detective" data-name="侦探猫" data-special="举放大镜"></div><div class="caption"><span class="number">06</span><h2>侦探猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="postman-walk.webp" width="256" height="256" alt="邮差猫散步动画" data-cat="postman" data-name="邮差猫" data-special="送出小信封"></div><div class="caption"><span class="number">07</span><h2>邮差猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="cozy-walk.webp" width="256" height="256" alt="抱抱猫散步动画" data-cat="cozy" data-name="抱抱猫" data-special="抱小鱼玩偶"></div><div class="caption"><span class="number">08</span><h2>抱抱猫</h2><span class="action-label">散步</span></div></article>
+    <article class="card"><div class="stage"><img src="explorer-walk.webp" width="256" height="256" alt="探险猫散步动画" data-cat="explorer" data-name="探险猫" data-special="展开小地图"></div><div class="caption"><span class="number">09</span><h2>探险猫</h2><span class="action-label">散步</span></div></article>
+</section>
+<footer><a href="../tortie-v1/nine-skins-preview-v3.png">查看已确认的皮肤原稿</a> · <a href="nine-walk.gif">散步合辑</a> · <a href="nine-sleep.gif">睡觉合辑</a> · <a href="nine-special.gif">专属动作合辑</a><br>每只小猫 16 帧 · 共 27 组动作 · 透明 WebP / PNG 图集及帧说明见素材目录</footer>
+</main>
+<script>
+(function () {
+  var selected = 'walk';
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var paused = reduced.matches;
+  var images = Array.from(document.querySelectorAll('[data-cat]'));
+  var buttons = Array.from(document.querySelectorAll('[data-action]'));
+  var toggle = document.getElementById('toggle-motion');
+  function show(image) {
+    var action = selected === 'special' ? image.dataset.special : selected === 'sleep' ? '睡觉' : '散步';
+    var key = image.dataset.cat + '-' + selected;
+    image.alt = image.dataset.name + action + (paused ? '首帧' : '动画');
+    image.closest('.card').querySelector('.action-label').textContent = action;
+    image.src = key + (paused ? '-poster.png' : '.webp');
+  }
+  function render() {
+    buttons.forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.action === selected)); });
+    toggle.textContent = paused ? '播放动画' : '暂停动画';
+    toggle.setAttribute('aria-pressed', String(paused));
+    images.forEach(show);
+  }
+  buttons.forEach(function (button) { button.addEventListener('click', function () { selected = button.dataset.action; render(); }); });
+  toggle.addEventListener('click', function () { paused = !paused; render(); });
+  document.getElementById('reduced-note').hidden = !paused;
+  render();
+})();
+</script></body></html>

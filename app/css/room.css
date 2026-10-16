@@ -85,10 +85,15 @@
 }
 .room-life__scroll { overflow-y: auto; min-height: 0; padding: 16px 18px 20px; -webkit-overflow-scrolling: touch; }
 .room-life__summary { color: var(--moss); font-size: 16px; font-weight: 800; margin-bottom: 7px; }
+.room-life__total { font-size: 12px; font-weight: 700; color: var(--moss); margin-bottom: 6px; }
 .room-life__note { color: #796c55; font-size: 11px; line-height: 1.8; }
 .room-life__list, .room-life__furniture, .room-life__journal { list-style: none; padding: 0; }
 .room-life__list { margin: 13px 0 20px; }
 .room-life__cat { display: flex; align-items: center; min-height: 70px; padding: 9px 0; border-bottom: 1px solid #e2d8bf; }
+.room-life__cat[hidden], .room-life__energy[hidden] { display: none; }
+.room-life__energy { max-width: 170px; height: 4px; margin-top: 6px; border-radius: 4px; background: #e2d8bf; overflow: hidden; }
+.room-life__energy > span { display: block; height: 100%; background: var(--sage-deep); border-radius: inherit; }
+.room-life__energy[data-low="true"] > span { background: var(--ember); }
 .room-life__portrait { width: 48px; height: 48px; margin-right: 10px; flex-shrink: 0; object-fit: contain; }
 .room-life__body { min-width: 0; flex: 1; }
 .room-life__body h3 { font-size: 13px; margin-bottom: 5px; }
@@ -224,6 +229,12 @@
 
 /* 收集册：每猫一张卡，两个里程碑共用真实的分猫计数。 */
 .collection { background: var(--paper); color: var(--ink); }
+.series-tabs { display: flex; flex-shrink: 0; margin: 14px 0; padding: 4px; border: 1px solid var(--sage); border-radius: 14px; background: var(--paper-2); }
+.series-tabs--collection { margin: 10px 12px 0; }
+.series-tabs__tab { flex: 1; min-width: 0; min-height: 48px; padding: 7px 5px; border: 0; border-radius: 10px; background: transparent; color: var(--moss); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.series-tabs__tab small { display: block; margin-top: 3px; font-size: 10px; font-weight: 400; }
+.series-tabs__tab[aria-selected="true"] { color: var(--paper); background: var(--moss); }
+.series-tabs__tab:focus { outline: 2px dashed var(--ember); outline-offset: -3px; }
 .collection__header {
   display: flex; flex-shrink: 0; align-items: center; padding: 14px 12px 10px;
   padding-top: calc(14px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
@@ -234,11 +245,12 @@
 .collection__scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 12px 10px; -webkit-overflow-scrolling: touch; }
 .collection__intro { padding: 2px 4px 16px; }
 .collection__eyebrow { font-size: 12px; letter-spacing: 2px; color: var(--moss); }
-.collection__summary { margin-top: 8px; font-size: 18px; font-weight: 900; }
+.collection__summary { margin-top: 8px; font-size: 14px; font-weight: 900; line-height: 1.7; }
 .collection__milestones { display: flex; margin: 14px 0 10px; border: 1px solid var(--sage); border-radius: 12px; background: var(--paper-2); }
 .collection__milestones > span { flex: 1; padding: 10px 4px; text-align: center; font-size: 12px; }
 .collection__milestones > span + span { border-left: 1px dashed var(--sage); }
 .collection__milestones b { font-size: 23px; color: var(--ember); }
+.collection__milestones strong { display: block; margin-top: 3px; font-size: 10px; font-weight: 500; line-height: 1.5; }
 .collection__note { font-size: 11px; color: var(--ink-soft); line-height: 1.7; }
 .collection__notice { padding: 10px 12px; margin-bottom: 12px; border-radius: 10px; background: var(--moss); color: var(--paper); font-size: 12px; line-height: 1.6; }
 .collection__notice[hidden] { display: none; }
@@ -253,6 +265,9 @@
 .cat-card__title { display: flex; flex-wrap: wrap; align-items: center; }
 .cat-card__title h2 { font-size: 16px; margin-right: 6px; font-weight: 900; }
 .cat-card__badge { padding: 3px 5px; border-radius: 5px; font-size: 9px; color: var(--moss); background: rgba(147,173,127,0.18); white-space: nowrap; }
+.cat-card__stages { display: flex; flex-wrap: wrap; margin-top: 6px; font-size: 9px; color: var(--ink-soft); }
+.cat-card__stages > span { padding: 3px 5px; margin: 0 4px 3px 0; background: #eee5d2; border-radius: 4px; }
+.cat-card__stages .is-complete { color: var(--moss); background: #e1e7d3; font-weight: 700; }
 .cat-card__count { margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--moss); }
 .cat-card__bar { height: 7px; margin-top: 7px; border-radius: 4px; background: #e3d9bf; overflow: hidden; }
 .cat-card__bar > span { display: block; height: 100%; background: var(--sage-deep); border-radius: 4px; }
@@ -275,7 +290,7 @@
 @media (max-width: 350px) {
   .cat-card { padding: 10px; }
   .cat-card__portrait { width: 64px; height: 64px; margin-right: 8px; }
-  .collection__summary { font-size: 16px; }
+  .collection__summary { font-size: 12px; }
   .collection__edition { font-size: 9px; }
 }
 .room__play:focus { outline-color: var(--paper); }

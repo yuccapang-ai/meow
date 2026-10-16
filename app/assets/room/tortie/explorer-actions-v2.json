@@ -1,0 +1,146 @@
+{
+  "image": "explorer-actions-v2.webp",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "actions": {
+    "walk": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sleep": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "special": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "special": "展开小地图",
+  "frames": [
+    {
+      "index": 0,
+      "left": 21,
+      "top": 62,
+      "width": 203,
+      "height": 170
+    },
+    {
+      "index": 1,
+      "left": 18,
+      "top": 65,
+      "width": 204,
+      "height": 167
+    },
+    {
+      "index": 2,
+      "left": 18,
+      "top": 64,
+      "width": 204,
+      "height": 168
+    },
+    {
+      "index": 3,
+      "left": 19,
+      "top": 66,
+      "width": 203,
+      "height": 166
+    },
+    {
+      "index": 4,
+      "left": 19,
+      "top": 63,
+      "width": 205,
+      "height": 169
+    },
+    {
+      "index": 5,
+      "left": 20,
+      "top": 65,
+      "width": 204,
+      "height": 167
+    },
+    {
+      "index": 6,
+      "left": 20,
+      "top": 64,
+      "width": 204,
+      "height": 168
+    },
+    {
+      "index": 7,
+      "left": 23,
+      "top": 66,
+      "width": 201,
+      "height": 166
+    },
+    {
+      "index": 8,
+      "left": 26,
+      "top": 85,
+      "width": 198,
+      "height": 147
+    },
+    {
+      "index": 9,
+      "left": 28,
+      "top": 106,
+      "width": 200,
+      "height": 126
+    },
+    {
+      "index": 10,
+      "left": 29,
+      "top": 106,
+      "width": 211,
+      "height": 126
+    },
+    {
+      "index": 11,
+      "left": 28,
+      "top": 105,
+      "width": 211,
+      "height": 127
+    },
+    {
+      "index": 12,
+      "left": 37,
+      "top": 16,
+      "width": 171,
+      "height": 216
+    },
+    {
+      "index": 13,
+      "left": 27,
+      "top": 18,
+      "width": 191,
+      "height": 214
+    },
+    {
+      "index": 14,
+      "left": 29,
+      "top": 17,
+      "width": 191,
+      "height": 215
+    },
+    {
+      "index": 15,
+      "left": 22,
+      "top": 17,
+      "width": 202,
+      "height": 215
+    }
+  ]
+}

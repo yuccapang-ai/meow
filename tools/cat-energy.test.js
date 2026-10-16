@@ -41,12 +41,12 @@ collection.recordRun('cats', [0,100,100,100,100,100,100,100,100], 'home-slots');
 travel.tick();
 now += 90001;
 var departures = travel.tick();
-assert.strictEqual(departures.length, 6);
+assert.strictEqual(departures.length, 7);
 var trip = travel.list().filter(function (entry) { return entry.travelling; })[0];
 var tripEnergy = trip.energy;
 now += 30000; travel.tick();
 assert.strictEqual(tripEnergy - cat(trip.cat.id).energy, 1, 'travelling cats lose two energy per minute');
-assert.strictEqual(travel.list().filter(function (entry) { return entry.travelling; }).length, 6);
+assert.strictEqual(travel.list().filter(function (entry) { return entry.travelling; }).length, 7);
 
 var reloaded = Travel.create({
   collection: collection,

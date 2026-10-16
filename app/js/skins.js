@@ -73,6 +73,40 @@
       ]
     },
     {
+      id: 'tortie',
+      name: '灰玳瑁猫',
+      noun: '猫猫',
+      unlock: 0,
+      type: 'image',
+      dir: './skins/tortie/',
+      ext: '.webp',
+      wipe: 'cat',
+      items: [
+        { name: '草莓猫', file: '1', fx: 'donut', color: '#e87891', word: '甜！',
+          news: { pair: '摘到了最甜的草莓', line: '装满了一整篮草莓' } },
+        { name: '水手猫', file: '2', fx: 'rain', color: '#4a89b9', word: '嗨～',
+          news: { pair: '向远处的小船挥爪', line: '带着伙伴一起出航' } },
+        { name: '星星猫', file: '3', fx: 'party', color: '#9677b4', word: '闪！',
+          news: { pair: '点亮了一颗小星星', line: '把夜空装进口袋' } },
+        { name: '园丁猫', file: '4', fx: 'carrot', color: '#7f9b72', word: '开花',
+          news: { pair: '给小花浇了点水', line: '种出了一整片花园' } },
+        { name: '面包猫', file: '5', fx: 'chef', color: '#c79b60', word: '揉揉',
+          news: { pair: '揉出了一团软面包', line: '面包店今天全售罄' } },
+        { name: '侦探猫', file: '6', fx: 'peek', color: '#9c8872', word: '发现',
+          news: { pair: '发现了小鱼干的线索', line: '解开了所有小谜题' } },
+        { name: '邮差猫', file: '7', fx: 'heart', color: '#4c9898', word: '来信',
+          news: { pair: '送出了一封暖暖的信', line: '把好消息送到每一家' } },
+        { name: '抱抱猫', file: '8', fx: 'blanket', color: '#d99c9b', word: '抱抱',
+          news: { pair: '抱紧了小鱼玩偶', line: '收获了一屋子的拥抱' } },
+        { name: '探险猫', file: '9', fx: 'book', color: '#c88651', word: '出发',
+          news: { pair: '在地图上标记了宝藏', line: '探索了整座小岛' } }
+      ].map(function (item) {
+        item.fortune = ['先歇一会儿，明天再来', '收获一点小快乐', '今天的好运满满当当', '猫猫伙伴都为你鼓掌！'];
+        item.theme = { ribbon: item.name + '的小收获', tagline: 'LITTLE PAWS, BIG ADVENTURES' };
+        return item;
+      })
+    },
+    {
       id: 'pengci',
       name: '碰瓷猫',
       noun: '猫猫',

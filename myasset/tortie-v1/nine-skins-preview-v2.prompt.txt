@@ -1,0 +1,21 @@
+Use case: identity-preserve / precise-object-edit.
+Image 1 is the EDIT TARGET: a nine-cat 3x3 game skin preview board. Image 2 is the REAL CAT whose coat colors and markings must be restored accurately. Edit Image 1, preserving all nine skin themes, costume and prop colors, composition, scale, warm ivory background, thick cocoa drawing outlines and watercolor game illustration style. Make TWO necessary corrections throughout all nine cats: restore dark gray coat coloration from the photo, and fix duplicated limbs.
+
+COAT COLOR CORRECTION, highest priority from user:
+The reference cat is predominantly DARK COOL GRAY and charcoal, with discreet muted diluted tortoiseshell/tabby markings. The current board is far too golden yellow and beige. Across every head, torso, leg and tail, substantially increase the area of dark gray fur; at least 80-85% of the visible coat should read as medium-dark smoky gray with darker charcoal mottling and tabby stripes. Use the actual photograph, not the old board, as the color authority. Reduce the area and saturation of yellow/apricot patches by roughly two thirds. Only small irregular desaturated gray-beige / dusty taupe patches on the forehead, cheeks and a few flanks remain. NO broad golden cheeks, NO orange/yellow belly, NO bright ginger patches, NO warm yellow color cast on gray fur. The belly, chest and paws should be predominantly gray as in the photo; a small soft off-white muzzle and chin are acceptable, but no broad white facial blaze and no white socks. The face has asymmetrical gray/taupe tabby markings, peach-pink nose with dark border, pink ear interiors, yellow-green eyes. Keep these recognizable real-cat traits. Tail is smoky gray with charcoal rings. Gray fur should look dark and soft, not black featureless silhouettes: retain visible subtle dark stripes and gentle watercolor texture.
+This recoloring applies ONLY TO CAT FUR. Keep the strawberry pink, sailor navy, wizard lavender and yellow star, garden sage, baker cream, detective tan, postman teal, cozy peach, explorer orange accessories at their existing colors so the skins remain distinct. Do not darken the entire image.
+
+ANATOMY CORRECTION, mandatory for EVERY cat:
+The current target erroneously has raised forepaws IN ADDITION to extra front legs reaching the ground. Redraw the bodies, do not copy that error.
+Every single cat must have exactly FOUR LIMBS TOTAL: TWO FORELIMBS and TWO HIND LIMBS. For this board, use the SAME easy-to-audit seated posture across all nine cats: only TWO hind feet rest on the ground, left and right, and exactly TWO forepaws are raised at belly/chest height holding the prop. Rounded haunches are just parts of the seated torso, not extra feet: no toe lines or separate paw shapes at the outside edges of the haunches. The lower torso is one uninterrupted rounded belly between the two hind legs. Delete every extra center/front leg extending from shoulders to floor. Do not draw a third or fourth ground paw.
+Top-left strawberry: two raised forepaws holding strawberry + two ground hind feet.
+Top-middle sailor: two forepaws resting visibly against belly/chest (not reaching floor) + two ground hind feet.
+Top-right wizard: one raised forepaw holds wand, other rests on belly + two ground hind feet.
+Middle-left gardener: two raised forepaws hold watering can + two ground hind feet; flower pot is not a limb.
+Middle-middle baker: two raised forepaws hold croissant + two ground hind feet.
+Middle-right detective: one raised forepaw holds magnifier, other rests on belly + two ground hind feet.
+Bottom-left postman: two raised forepaws hold envelope + two ground hind feet.
+Bottom-middle cozy: two raised forepaws hug blue plush + two ground hind feet.
+Bottom-right explorer: two raised forepaws hold map + two ground hind feet.
+Exactly one tail per cat, two ears, no human hands. Cute short feline forelegs and chunky cat feet, no humanoid torso.
+Keep all nine faces, fur markings and body proportions consistent with each other, same underlying pet wearing different outfits. Maintain the 3x3 layout, full uncut characters, generous clean padding, and existing no-text presentation. Square high-resolution output. No labels, numbers, watermark, background scenery, extra characters or extra limbs.

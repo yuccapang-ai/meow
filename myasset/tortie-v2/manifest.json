@@ -1,0 +1,641 @@
+{
+  "version": 2,
+  "approvedDesign": "../tortie-v1/nine-skins-preview-v3.png",
+  "generationMode": "built-in image_gen",
+  "cell": 256,
+  "columns": 4,
+  "rows": 4,
+  "footY": 232,
+  "skins": [
+    {
+      "id": "strawberry",
+      "name": "草莓猫",
+      "special": "吃草莓",
+      "portrait": "../../app/skins/tortie/1.webp",
+      "atlas": "../../app/assets/room/tortie/strawberry-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/strawberry-actions-v2.json",
+      "prompt": "01-strawberry.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "strawberry-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "strawberry-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "strawberry-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sailor",
+      "name": "水手猫",
+      "special": "挥爪打招呼",
+      "portrait": "../../app/skins/tortie/2.webp",
+      "atlas": "../../app/assets/room/tortie/sailor-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/sailor-actions-v2.json",
+      "prompt": "02-sailor.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "sailor-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "sailor-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "sailor-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wizard",
+      "name": "星星猫",
+      "special": "挥动星星棒",
+      "portrait": "../../app/skins/tortie/3.webp",
+      "atlas": "../../app/assets/room/tortie/wizard-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/wizard-actions-v2.json",
+      "prompt": "03-wizard.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "wizard-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "wizard-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "wizard-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "garden",
+      "name": "园丁猫",
+      "special": "浇小花",
+      "portrait": "../../app/skins/tortie/4.webp",
+      "atlas": "../../app/assets/room/tortie/garden-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/garden-actions-v2.json",
+      "prompt": "04-garden.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "garden-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "garden-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "garden-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "baker",
+      "name": "面包猫",
+      "special": "揉小面团",
+      "portrait": "../../app/skins/tortie/5.webp",
+      "atlas": "../../app/assets/room/tortie/baker-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/baker-actions-v2.json",
+      "prompt": "05-baker.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "baker-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "baker-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "baker-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "detective",
+      "name": "侦探猫",
+      "special": "举放大镜",
+      "portrait": "../../app/skins/tortie/6.webp",
+      "atlas": "../../app/assets/room/tortie/detective-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/detective-actions-v2.json",
+      "prompt": "06-detective.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "detective-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "detective-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "detective-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "postman",
+      "name": "邮差猫",
+      "special": "送出小信封",
+      "portrait": "../../app/skins/tortie/7.webp",
+      "atlas": "../../app/assets/room/tortie/postman-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/postman-actions-v2.json",
+      "prompt": "07-postman.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "postman-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "postman-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "postman-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cozy",
+      "name": "抱抱猫",
+      "special": "抱小鱼玩偶",
+      "portrait": "../../app/skins/tortie/8.webp",
+      "atlas": "../../app/assets/room/tortie/cozy-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/cozy-actions-v2.json",
+      "prompt": "08-cozy.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "cozy-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "cozy-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "cozy-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "explorer",
+      "name": "探险猫",
+      "special": "展开小地图",
+      "portrait": "../../app/skins/tortie/9.webp",
+      "atlas": "../../app/assets/room/tortie/explorer-actions-v2.webp",
+      "metadata": "../../app/assets/room/tortie/explorer-actions-v2.json",
+      "prompt": "09-explorer.prompt.txt",
+      "animations": [
+        {
+          "action": "walk",
+          "file": "explorer-walk.webp",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "delay": 120
+        },
+        {
+          "action": "sleep",
+          "file": "explorer-sleep.webp",
+          "frames": [
+            8,
+            9,
+            10,
+            11,
+            10,
+            11,
+            10,
+            11
+          ],
+          "delay": [
+            320,
+            500,
+            900,
+            900,
+            900,
+            900,
+            900,
+            900
+          ]
+        },
+        {
+          "action": "special",
+          "file": "explorer-special.webp",
+          "frames": [
+            12,
+            13,
+            14,
+            13,
+            14,
+            15
+          ],
+          "delay": [
+            550,
+            450,
+            550,
+            400,
+            550,
+            1000
+          ]
+        }
+      ]
+    }
+  ]
+}
