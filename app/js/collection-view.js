@@ -71,7 +71,8 @@
     });
     document.getElementById('collection-summary').textContent = '本体 ' + bodies + ' / ' + rows.length + ' · 入住 ' + home + ' / ' + rows.length + ' · 专属 ' + specials + ' / ' + rows.length;
     document.getElementById('collection-edition').textContent = selected.name;
-    document.getElementById('collection-note').textContent = rows[0].cat.name + '默认入住，散步和睡觉直接开放。两系列门槛相同、进度独立；专属动作学会后需入住才能使用。';
+    var intro = selected.id === 'cats' && root.TurtleCatCollection.starter ? root.TurtleCatCollection.starter.name : rows[0].cat.name;
+    document.getElementById('collection-note').textContent = intro + '默认入住，散步和睡觉直接开放。两系列门槛相同、进度独立；专属动作学会后需入住才能使用。';
     document.getElementById('collection-play-label').textContent = '进入' + selected.name + '对对碰';
     document.getElementById('room-collection-count').textContent = allRows.filter(function (entry) { return entry.home; }).length + ' / ' + allRows.length;
     var notice = document.getElementById('collection-notice');

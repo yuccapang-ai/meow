@@ -17,24 +17,24 @@ var travel = Travel.create({
 
 function cat(id) { return travel.list().filter(function (entry) { return entry.cat.id === id; })[0]; }
 
-assert.strictEqual(cat('donut').energy, 15);
+assert.strictEqual(cat('cool').energy, 15);
 now += 60000; travel.tick();
-assert.strictEqual(cat('donut').energy, 14, 'home cats lose one energy per minute');
+assert.strictEqual(cat('cool').energy, 14, 'home cats lose one energy per minute');
 for (var minute = 0; minute < 9; minute++) { now += 60000; travel.tick(); }
-assert.strictEqual(cat('donut').energy, 5);
+assert.strictEqual(cat('cool').energy, 5);
 now += 60000; travel.tick();
-assert.strictEqual(cat('donut').energy, 4);
-assert.strictEqual(cat('donut').sleeping, true, 'energy below five forces sleep');
-assert.strictEqual(travel.wake('donut'), false, 'cats below five energy cannot wake');
+assert.strictEqual(cat('cool').energy, 4);
+assert.strictEqual(cat('cool').sleeping, true, 'energy below five forces sleep');
+assert.strictEqual(travel.wake('cool'), false, 'cats below five energy cannot wake');
 now += 90000; travel.tick();
-assert.strictEqual(cat('donut').energy, 7);
-assert.strictEqual(cat('donut').sleeping, true, 'low-energy sleep lasts until the random wake threshold');
+assert.strictEqual(cat('cool').energy, 7);
+assert.strictEqual(cat('cool').sleeping, true, 'low-energy sleep lasts until the random wake threshold');
 now += 240000; travel.tick();
-assert.strictEqual(cat('donut').energy, 15);
-assert.strictEqual(cat('donut').sleeping, false);
-assert.strictEqual(travel.sleep('donut'), true);
+assert.strictEqual(cat('cool').energy, 15);
+assert.strictEqual(cat('cool').sleeping, false);
+assert.strictEqual(travel.sleep('cool'), true);
 now += 60000; travel.tick();
-assert.strictEqual(travel.wake('donut'), true, 'manually sleeping cats above five energy can wake');
+assert.strictEqual(travel.wake('cool'), true, 'manually sleeping cats above five energy can wake');
 
 collection.recordRun('cats', [0,30,30,30,30,30,30,30,30], 'unlock');
 collection.recordRun('cats', [0,100,100,100,100,100,100,100,100], 'home-slots');

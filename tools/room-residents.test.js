@@ -18,10 +18,11 @@ function Image() { images.push(this); }
 function readyImages() { images.splice(0).forEach(function (image) { image.onload(); }); }
 var media = { matches: false, addListener: function (cb) { this.listener = cb; } };
 var collection = Collection.create(null), allSeries = process.env.ROOM_TEST_SERIES === 'all';
-var listAll = collection.list;
+var listAll = collection.list, roomListAll = collection.roomList;
 collection.list = function (skin) { return listAll(skin || (allSeries ? undefined : 'cats')); };
+collection.roomList = function (skin) { return roomListAll(skin || (allSeries ? undefined : 'cats')); };
 var catalog = Collection.catalog.filter(function (cat) { return allSeries || cat.skin === 'cats'; });
-var initialCount = allSeries ? 2 : 1, residentCount = catalog.length;
+var initialCount = allSeries ? 2 : 1, residentCount = catalog.length + 1;
 var window = { TurtleCatActions: Actions, TurtleCatCollection: { get: function () { return collection; }, series: Collection.series }, matchMedia: function () { return media; } };
 var seededMath = Object.create(Math), randomSeed = Number(process.env.ROOM_TEST_SEED) || 73421;
 seededMath.random = function () { randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0; return randomSeed / 4294967296; };
@@ -38,7 +39,7 @@ function tick(elapsed) { now += elapsed || 1000 / 60; var callbacks = Array.from
 function actor(id) { return world.children.filter(function (el) { return el.getAttribute('data-cat-id') === id; })[0]; }
 function pose(el) { return el.children[1].children[0].getAttribute('data-frame'); }
 var atlases = {};
-Collection.catalog.forEach(function (cat) { atlases[cat.id] = JSON.parse(fs.readFileSync(require.resolve('../app/' + cat.atlas.replace('.webp', '.json')), 'utf8')); });
+Collection.catalog.concat([Collection.starter]).forEach(function (cat) { atlases[cat.id] = JSON.parse(fs.readFileSync(require.resolve('../app/' + cat.atlas.replace('.webp', '.json')), 'utf8')); });
 // Check actual sprite rectangles independently of the movement controller.
 // Small edge overlaps are allowed; cats must not stack on top of one another.
 function body(el) {
@@ -67,30 +68,31 @@ function assertSeparated() {
 }
 room.enter(); room.layout(1875); readyImages(); room.start();
 assert.strictEqual(world.children.length, initialCount);
-var donut = actor('donut');
-assert.strictEqual(donut.hidden, false);
-assert.strictEqual(room.perform('donut', 'special'), false);
+var cool = actor('cool');
+assert.strictEqual(cool.hidden, false);
+assert.strictEqual(room.perform('cool', 'special'), false);
 assert.strictEqual(room.perform('coder', 'walk'), false);
-room.perform('donut', 'walk');
-var start = donut.style.transform, seen = new Set();
-for (var i = 0; i < 160; i++) { tick(); seen.add(pose(donut)); }
-assert.notStrictEqual(donut.style.transform, start);
+room.perform('cool', 'walk');
+var start = cool.style.transform, seen = new Set();
+for (var i = 0; i < 160; i++) { tick(); seen.add(pose(cool)); }
+assert.notStrictEqual(cool.style.transform, start);
 assert.ok(seen.size >= 8, 'walk must change real sprite frames while moving');
-for (i = 0; i < 1200; i++) { tick(); assert.notStrictEqual(donut.getAttribute('data-state'), 'special'); }
-room.perform('donut', 'sleep'); donut.click();
-assert.strictEqual(donut.getAttribute('data-state'), 'wake');
-assert.strictEqual(room.contains(donut.children[1].children[0]), true);
+for (i = 0; i < 1200; i++) { tick(); assert.notStrictEqual(cool.getAttribute('data-state'), 'special'); }
+room.perform('cool', 'sleep'); cool.click();
+assert.strictEqual(cool.getAttribute('data-state'), 'wake');
+assert.strictEqual(room.contains(cool.children[1].children[0]), true);
 assert.strictEqual(room.contains(new Element('span')), false);
-room.leave(); start = donut.style.transform;
+room.leave(); start = cool.style.transform;
 for (i = 0; i < 30; i++) tick();
-assert.strictEqual(donut.style.transform, start); assert.strictEqual(scheduled.size, 0);
+assert.strictEqual(cool.style.transform, start); assert.strictEqual(scheduled.size, 0);
 
 collection.recordRun('cats', [49,29], 'near'); room.enter(); room.layout(1875); room.start();
-assert.strictEqual(world.children.length, initialCount);
+assert.strictEqual(world.children.length, initialCount + 1);
 assert.strictEqual(room.perform('donut', 'special'), false);
 collection.recordRun('cats', [21,1], 'unlock'); room.enter(); room.layout(1875); readyImages(); room.start();
 assertSeparated();
-assert.strictEqual(world.children.length, initialCount + 1);
+assert.strictEqual(world.children.length, initialCount + 2);
+var donut = actor('donut');
 assert.strictEqual(room.perform('donut', 'special'), true);
 assert.strictEqual(donut.getAttribute('data-state'), 'special');
 assert.strictEqual(room.perform('coder', 'special'), false);
@@ -109,13 +111,13 @@ var fullSize = parseFloat(donut.style.width);
 room.layout(937.5, 667, 1, 0);
 assertSeparated();
 if (!allSeries) assert.strictEqual(parseFloat(donut.style.width), fullSize, 'cats keep their size when only room length is halved');
-else assert.ok(parseFloat(donut.style.width) >= 70, 'eighteen cats remain readable in a shortened room');
+else assert.ok(parseFloat(donut.style.width) >= 70, 'room cats remain readable in a shortened room');
 catalog.forEach(function (cat) { room.perform(cat.id, 'walk'); });
 for (i = 0; i < 180; i++) tick();
 assert.ok(world.children.every(function (el) { return !/NaN|Infinity/.test(el.style.transform); }));
 room.focus('donut'); assert.ok(isFinite(camera), 'finding cats works in half-length world');
 
-// All nine cats share a shortened room for two minutes, including long frames.
+// All room cats share a shortened room for two minutes, including long frames.
 // Sleeping cats remain obstacles; no actor may jump when avoiding a neighbour.
 var movedCats = new Set(), waiting = false;
 var movingFrames = world.children.map(function () { return 0; });

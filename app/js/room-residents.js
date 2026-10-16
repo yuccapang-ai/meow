@@ -4,7 +4,7 @@
   function create(options) {
     var world = options.world, viewport = options.viewport, footer = options.footer;
     var collection = root.TurtleCatCollection.get(), residents = [], active = false;
-    var selected = 'donut', raf = 0, lastTime = 0, width = 0, height = 0, size = 0;
+    var selected = 'cool', raf = 0, lastTime = 0, width = 0, height = 0, size = 0;
     var clearanceX = 0, clearanceY = 0, layoutKey = '';
     var travel = options.travel, arranging = false;
     var furniture = root.TurtleRoomFurniture ? root.TurtleRoomFurniture.create(world, { save: function (id, position) { return travel && travel.placeFurniture(id, position); } }) : null;
@@ -228,7 +228,7 @@
       residents.push(r); load(r);
     }
     function sync() {
-      collection.list().forEach(function (p) { if (p.home && !find(p.cat.id)) add(p.cat); });
+      collection.roomList().forEach(function (p) { if (p.home && !find(p.cat.id)) add(p.cat); });
       options.findButton.disabled = residents.length === 0;
     }
     function refresh() {

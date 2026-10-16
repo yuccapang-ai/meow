@@ -31,7 +31,7 @@
       var saved = JSON.parse(storage.getItem(KEY));
       if (saved && saved.version === 1) {
         var loadedAt = clock();
-        collection.list().forEach(function (progress) {
+        collection.roomList().forEach(function (progress) {
           var entry = saved.cats && saved.cats[progress.cat.id];
           if (!entry || !progress.home) return;
           var travelling = validTime(entry.startedAt) && validTime(entry.endsAt) &&
@@ -66,7 +66,7 @@
       try { storage.setItem(KEY, text); } catch (error) {}
     }
     function sync(now) {
-      collection.list().forEach(function (progress) {
+      collection.roomList().forEach(function (progress) {
         if (progress.home && !data.cats[progress.cat.id]) data.cats[progress.cat.id] = {
           startedAt: 0, endsAt: 0, nextAt: nextDeparture(now), energy: MAX_ENERGY, energyAt: now, sleeping: false, wakeAt: 0
         };
@@ -132,7 +132,7 @@
     function list(now) {
       now = now === undefined ? clock() : now;
       sync(now); advanceAll(now);
-      return collection.list().map(function (progress) {
+      return collection.roomList().map(function (progress) {
         var entry = data.cats[progress.cat.id];
         return { cat: progress.cat, bodyUnlocked: progress.body, count: progress.count, total: progress.total, unlocked: progress.home, travelling: !!(entry && entry.endsAt),
           remaining: entry && entry.endsAt ? Math.max(0, entry.endsAt - now) : 0,
