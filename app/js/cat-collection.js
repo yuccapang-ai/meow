@@ -9,7 +9,7 @@
   var BODY_UNLOCK_AT = 30, HOME_SLOT_STEP = 100;
   var series = [{ id: 'cats', name: '摸鱼猫' }, { id: 'tortie', name: '灰玳瑁猫' }];
   var starter = { id: 'cool', name: '墨镜猫', skin: 'cats', special: '装酷',
-    portrait: './skins/pengci/5.webp', atlas: './assets/room/cat/cool-cat-actions-v1.webp',
+    portrait: './skins/pengci/5.webp', atlas: './assets/room/cat/cool-cat-actions-v1.webp', atlasColumns: 4, atlasRows: 6,
     initial: true, starter: true, bodyAt: 0, homeAt: 0, specialAt: 50 };
   var names = ['甜甜圈猫', '码农猫', '音乐猫', '咖啡猫', '摄影猫', '厨师猫', '健身猫', '画家猫', '派对猫'];
   var ids = ['donut', 'coder', 'music', 'coffee', 'photo', 'chef', 'fitness', 'painter', 'party'];

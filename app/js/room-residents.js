@@ -40,7 +40,9 @@
       }
       if (r.ready && r.frame !== r.player.frame()) {
         r.frame = r.player.frame();
-        r.sprite.style.backgroundPosition = ((r.frame % 4) * 100 / 3) + '% ' + (Math.floor(r.frame / 4) * 100 / 3) + '%';
+        var columns = r.cat.atlasColumns || 4, rows = r.cat.atlasRows || 4;
+        r.sprite.style.backgroundPosition = ((r.frame % columns) * 100 / Math.max(1, columns - 1)) + '% ' +
+          (Math.floor(r.frame / columns) * 100 / Math.max(1, rows - 1)) + '%';
         r.sprite.setAttribute('data-frame', String(r.frame));
       }
     }
@@ -205,6 +207,7 @@
       var sprite = document.createElement('span'); sprite.className = 'room-cat__body'; sprite.hidden = true;
       sprite.setAttribute('role', 'img'); sprite.setAttribute('aria-label', cat.name);
       sprite.style.backgroundImage = 'url("' + cat.atlas + '")';
+      sprite.style.backgroundSize = (cat.atlasColumns || 4) * 100 + '% ' + (cat.atlasRows || 4) * 100 + '%';
       var fallback = document.createElement('img'); fallback.className = 'room-cat__fallback'; fallback.src = cat.portrait;
       fallback.alt = ''; fallback.draggable = false;
       facing.appendChild(sprite); facing.appendChild(fallback); el.appendChild(shadow); el.appendChild(facing); world.appendChild(el);
